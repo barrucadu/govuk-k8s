@@ -10,7 +10,7 @@ variable "aws_profile" {
 
 variable "ec2_ami" {
   type    = string
-  default = "ami-f976839e"
+  default = "ami-02a2b5480a79084b7"
 }
 
 variable "external_domain_name" {
@@ -113,34 +113,6 @@ resource "aws_route53_record" "jumpbox" {
   type    = "A"
   ttl     = 300
   records = ["${aws_instance.jumpbox.public_ip}"]
-}
-
-
-/* ************************************************************************* */
-/* puppet-master */
-
-resource "aws_instance" "puppet-master" {
-  ami           = "${var.ec2_ami}"
-  instance_type = "t3.micro"
-  subnet_id     = "${aws_subnet.private.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
-
-  vpc_security_group_ids = [
-    "${aws_security_group.friends.id}",
-    "${aws_security_group.ssh-internal.id}"
-  ]
-
-  tags = {
-    name = "puppet-master"
-  }
-}
-
-resource "aws_route53_record" "puppet-master" {
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "puppet-master.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.puppet-master.private_ip}"]
 }
 
 

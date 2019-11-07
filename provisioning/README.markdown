@@ -8,7 +8,7 @@ Pre-requisites:
 
 Scripts:
 
-- `./create.sh` - run terraform, ssh into machines, set up puppet, run puppet
+- `./create.sh` - run terraform, ssh into machines, build NixOS config
 - `./deploy-terraform.sh` - deploy terraform changes
 - `./destroy.sh` - tear down the cluster
 
@@ -22,12 +22,11 @@ Architecture
 The terraform defines a VPC (virtual private cloud) some EC2
 instances, domain names, and security rules:
 
-| Name            | Type        | Visibility         | Purpose                        |
-| --------------- | ----------- | ------------------ | ------------------------------ |
-| `jumpbox`       | `t3.micro`  | internal, external | external entry point to VPC    |
-| `puppet-master` | `t3.micro`  | internal           | manages instance configuration |
-| `k8s-master`    | `t3.micro`  | internal           | orchestrates k8s cluster       |
-| `k8s-slave`     | `m5.xlarge` | internal           | runs k8s workloads             |
+| Name         | Type        | Visibility         | Purpose                        |
+| ------------ | ----------- | ------------------ | ------------------------------ |
+| `jumpbox`    | `t3.micro`  | internal, external | external entry point to VPC    |
+| `k8s-master` | `t3.micro`  | internal           | orchestrates k8s cluster       |
+| `k8s-slave`  | `m5.xlarge` | internal           | runs k8s workloads             |
 
 The `jumpbox` is accessible to SSH externally, and can SSH into all
 the internal machines.  The internal machines are not accessible
@@ -39,7 +38,7 @@ You may want to customise the following variables:
 | ------------------------------ | ------------------------------------ | ----------------------------------------------------- |
 | `aws_region`                   | `eu-west-2`                          | where the infrastructure is created                   |
 | `aws_profile`                  | `govuk-k8s`                          | credentials profile to use                            |
-| `ec2_ami`                      | `ami-f976839e`                       | AMI to use (region-specific)                          |
+| `ec2_ami`                      | `ami-02a2b5480a79084b7`              | AMI to use (region-specific)                          |
 | `external_domain_name`         | `govuk-k8s.barrucadu.co.uk`          | publicly-visible domains will be a subdomain of this  |
 | `internal_domain_name`         | `internal.govuk-k8s.barrucadu.co.uk` | privately-visible domains will be a subdomain of this |
 | `provisioning_public_key_file` | `/home/barrucadu/.ssh/id_rsa.pub`    | SSH public key to use for provisioning                |

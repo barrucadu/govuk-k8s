@@ -15,7 +15,7 @@ Tools used:
 
 - [Kubernetes][], for container orchestration.
 - [Terraform][], to create the infrastructure underpinning k8s.
-- [Puppet][], to configure the infrastructure underpinning k8s.
+- [NixOS][], to configure the infrastructure underpinning k8s.
 
 See the `provisioning/` directory to set up a cluster from scratch in
 AWS.
@@ -24,4 +24,4 @@ AWS.
 [govuk-docker]: https://github.com/alphagov/govuk-docker
 [Kubernetes]: https://kubernetes.io/
 [Terraform]: https://www.terraform.io/
-[Puppet]: https://puppet.com/
+[NixOS]: https://nixos.org/
