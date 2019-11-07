@@ -32,13 +32,17 @@ The `jumpbox` is accessible to SSH externally, and can SSH into all
 the internal machines.  The internal machines are not accessible
 externally.
 
+Internal domains are subdomains of `govuk-k8s.test`: [`.test` is a
+reserved TLD][] so this will not clash with any real-world domains.
+
+[`.test` is a reserved TLD]: https://tools.ietf.org/html/rfc2606
+
 You may want to customise the following variables:
 
-| Variable                       | Default                              | Meaning                                               |
-| ------------------------------ | ------------------------------------ | ----------------------------------------------------- |
-| `aws_region`                   | `eu-west-2`                          | where the infrastructure is created                   |
-| `aws_profile`                  | `govuk-k8s`                          | credentials profile to use                            |
-| `ec2_ami`                      | `ami-02a2b5480a79084b7`              | AMI to use (region-specific)                          |
-| `external_domain_name`         | `govuk-k8s.barrucadu.co.uk`          | publicly-visible domains will be a subdomain of this  |
-| `internal_domain_name`         | `internal.govuk-k8s.barrucadu.co.uk` | privately-visible domains will be a subdomain of this |
-| `provisioning_public_key_file` | `/home/barrucadu/.ssh/id_rsa.pub`    | SSH public key to use for provisioning                |
+| Variable                       | Default                           | Meaning                                              |
+| ------------------------------ | --------------------------------- | ---------------------------------------------------- |
+| `aws_region`                   | `eu-west-2`                       | where the infrastructure is created                  |
+| `aws_profile`                  | `govuk-k8s`                       | credentials profile to use                           |
+| `ec2_ami`                      | `ami-02a2b5480a79084b7`           | AMI to use (region-specific)                         |
+| `external_domain_name`         | `govuk-k8s.barrucadu.co.uk`       | publicly-visible domains will be a subdomain of this |
+| `provisioning_public_key_file` | `/home/barrucadu/.ssh/id_rsa.pub` | SSH public key to use for provisioning               |

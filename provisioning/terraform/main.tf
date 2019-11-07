@@ -18,11 +18,6 @@ variable "external_domain_name" {
   default = "govuk-k8s.barrucadu.co.uk"
 }
 
-variable "internal_domain_name" {
-  type    = string
-  default = "internal.govuk-k8s.barrucadu.co.uk"
-}
-
 variable "provisioning_public_key_file" {
   type    = string
   default = "/home/barrucadu/.ssh/id_rsa.pub"
@@ -43,6 +38,9 @@ provider "aws" {
 
 resource "aws_vpc" "cloud" {
   cidr_block = "10.0.0.0/16"
+
+  enable_dns_support   = true
+  enable_dns_hostnames = true
 }
 
 resource "aws_subnet" "public" {
@@ -80,7 +78,7 @@ resource "aws_route53_zone" "external" {
 }
 
 resource "aws_route53_zone" "internal" {
-  name = "${var.internal_domain_name}"
+  name = "govuk-k8s.test"
 
   vpc {
     vpc_id = "${aws_vpc.cloud.id}"
