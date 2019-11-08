@@ -23,6 +23,11 @@ variable "provisioning_public_key_file" {
   default = "/home/barrucadu/.ssh/id_rsa.pub"
 }
 
+variable "k8s_slaves" {
+  type    = number
+  default = 2
+}
+
 
 /* ************************************************************************* */
 /* provider */
@@ -192,6 +197,8 @@ resource "aws_route53_record" "k8s-master" {
 /* k8s-slave */
 
 resource "aws_instance" "k8s-slave" {
+  count = "${var.k8s_slaves}"
+
   ami           = "${var.ec2_ami}"
   instance_type = "m5.xlarge"
   subnet_id     = "${aws_subnet.private.id}"
@@ -202,7 +209,8 @@ resource "aws_instance" "k8s-slave" {
   ]
 
   tags = {
-    name = "k8s-slave"
+    name  = "k8s-slave"
+    index = "${count.index}"
   }
 
   root_block_device {
@@ -211,11 +219,13 @@ resource "aws_instance" "k8s-slave" {
 }
 
 resource "aws_route53_record" "k8s-slave" {
+  count = "${var.k8s_slaves}"
+
   zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "k8s-slave.${aws_route53_zone.internal.name}"
+  name    = "k8s-slave-${count.index}.${aws_route53_zone.internal.name}"
   type    = "A"
   ttl     = 300
-  records = ["${aws_instance.k8s-slave.private_ip}"]
+  records = ["${aws_instance.k8s-slave[count.index].private_ip}"]
 }
 
 
@@ -306,4 +316,8 @@ output "vpc-private-id" {
 
 output "public_ip" {
   value = "${aws_instance.jumpbox.public_ip}"
+}
+
+output "k8s_slaves" {
+  value = "${var.k8s_slaves}"
 }
