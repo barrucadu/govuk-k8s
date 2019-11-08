@@ -22,6 +22,8 @@ for i in $(seq 0 "$((SLAVES - 1))"); do
   echo $secret | ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${slave_host}.govuk-k8s.test" nixos-kubernetes-node-join
 done
 
+build_host web
+
 cp nixos/common.nix  /etc/nixos/common.nix
 cp nixos/jumpbox.nix /etc/nixos/configuration.nix
 nixos-rebuild switch

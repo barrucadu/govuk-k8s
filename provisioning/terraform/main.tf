@@ -163,6 +163,78 @@ resource "aws_route53_record" "jumpbox" {
 
 
 /* ************************************************************************* */
+/* web */
+
+resource "aws_instance" "web" {
+  ami           = "${var.ec2_ami}"
+  instance_type = "t3.medium"
+  subnet_id     = "${aws_subnet.public.id}"
+  key_name      = "${aws_key_pair.provisioning.key_name}"
+
+  vpc_security_group_ids = [
+    "${aws_security_group.external-web-ingress.id}",
+    "${aws_security_group.standard.id}"
+  ]
+
+  tags = {
+    name = "web"
+  }
+
+  root_block_device {
+    volume_size = 10
+  }
+}
+
+resource "aws_route53_record" "web-ipv4" {
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "web.${aws_route53_zone.external.name}"
+  type    = "A"
+  ttl     = 300
+  records = ["${aws_instance.web.public_ip}"]
+}
+
+resource "aws_route53_record" "web-ipv4-star" {
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "*.web.${aws_route53_zone.external.name}"
+  type    = "A"
+
+  alias {
+    zone_id = "${aws_route53_record.web-ipv4.zone_id}"
+    name    = "${aws_route53_record.web-ipv4.name}"
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "web-ipv6" {
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "web.${aws_route53_zone.external.name}"
+  type    = "AAAA"
+  ttl     = 300
+  records = "${aws_instance.web.ipv6_addresses}"
+}
+
+resource "aws_route53_record" "web-ipv6-star" {
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "*.web.${aws_route53_zone.external.name}"
+  type    = "AAAA"
+
+  alias {
+    zone_id = "${aws_route53_record.web-ipv6.zone_id}"
+    name    = "${aws_route53_record.web-ipv6.name}"
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "web" {
+  zone_id = "${aws_route53_zone.internal.zone_id}"
+  name    = "web.${aws_route53_zone.internal.name}"
+  type    = "A"
+  ttl     = 300
+  records = ["${aws_instance.web.private_ip}"]
+}
+
+
+/* ************************************************************************* */
 /* k8s-master */
 
 resource "aws_instance" "k8s-master" {
@@ -246,6 +318,28 @@ resource "aws_security_group" "external-ssh-ingress" {
   }
 }
 
+resource "aws_security_group" "external-web-ingress" {
+  name   = "sg_external-web-ingress"
+  vpc_id = "${aws_vpc.cloud.id}"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
 resource "aws_security_group" "standard" {
   name   = "sg_standard"
   vpc_id = "${aws_vpc.cloud.id}"
@@ -314,14 +408,22 @@ output "vpc-private-id" {
   value = "${aws_subnet.private.id}"
 }
 
-output "public_ip" {
+output "public-ssh-ip" {
   value = "${aws_instance.jumpbox.public_ip}"
+}
+
+output "public-web-ip" {
+  value = "${aws_instance.web.public_ip}"
 }
 
 output "k8s_slaves" {
   value = "${var.k8s_slaves}"
 }
 
-output "name_servers" {
+output "external-domain" {
+  value = "${aws_route53_zone.external.name}"
+}
+
+output "name-servers" {
   value = "${aws_route53_zone.external.name_servers}"
 }

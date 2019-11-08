@@ -39,7 +39,7 @@ reserved TLD][] so this will not clash with any real-world domains.
 
 [`.test` is a reserved TLD]: https://tools.ietf.org/html/rfc2606
 
-You may want to customise the following variables:
+You may want to customise the following terraform variables:
 
 | Variable                       | Default                           | Meaning                                              |
 | ------------------------------ | --------------------------------- | ---------------------------------------------------- |
@@ -49,3 +49,23 @@ You may want to customise the following variables:
 | `external_domain_name`         | `govuk-k8s.barrucadu.co.uk`       | publicly-visible domains will be a subdomain of this |
 | `provisioning_public_key_file` | `/home/barrucadu/.ssh/id_rsa.pub` | SSH public key to use for provisioning               |
 | `k8s_slaves`                   | `2`                               | number of k8s-slave instances to create              |
+
+The `external_domain_name` is also specified in `nixos/common.nix`,
+and must be kept in sync with the value in terraform.
+
+
+DNS
+---
+
+Terraform will create a DNS zone for the external domain and give you
+a list of nameservers.  To make that domain work across the wider
+internet, create NS records in wherever you host the rest of your DNS.
+
+
+HTTPS
+-----
+
+The `web` instance can serve HTTPS, if your DNS records have
+propagated: check that `web.${external_domain_name}` resolves first.
+Then set `enableHTTPS` and, optionally, `forceHTTPS` in
+`nixos/common.nix` and run `deploy-nixos.sh`.

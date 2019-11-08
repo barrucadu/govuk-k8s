@@ -3,7 +3,7 @@
 set -e
 
 pushd terraform
-HOST="$(terraform output public_ip)"
+HOST="$(terraform output public-ssh-ip)"
 SLAVES="$(terraform output k8s_slaves)"
 popd
 

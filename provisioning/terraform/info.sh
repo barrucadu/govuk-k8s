@@ -2,10 +2,11 @@
 
 set -e
 
-IP="$(terraform output public_ip)"
-EXTERNAL_DOMAIN="$(terraform output external_domain)"
+SSH_IP="$(terraform output public-ssh-ip)"
+WEB_IP="$(terraform output public-web-ip)"
+EXTERNAL_DOMAIN="$(terraform output external-domain)"
 
-echo "govuk-k8s running on ${IP}"
+echo "govuk-k8s running on ${SSH_IP} (ssh) and ${WEB_IP} (http/https)"
 echo
 echo "for external access, set the nameservers for ${EXTERNAL_DOMAIN} to"
-terraform output name_servers
+terraform output name-servers
