@@ -37,6 +37,11 @@ in
     '';
 
     virtualHosts = {
+      default = {
+        default = true;
+        locations."/".extraConfig = "return 421;";
+      };
+
       "www-origin.${domain}" = govuk_virtualhost 30000;
     };
   };
