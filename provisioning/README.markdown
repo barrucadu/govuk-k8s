@@ -10,6 +10,7 @@ Scripts:
 
 - `./create.sh` - run terraform, ssh into machines, build NixOS config
 - `./deploy-terraform.sh` - deploy terraform changes
+- `./deploy-nixos.sh` - deploy NixOS changes
 - `./destroy.sh` - tear down the cluster
 
 You should destroy your cluster at the end of every tinkering session
