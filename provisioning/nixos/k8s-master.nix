@@ -6,6 +6,7 @@
   networking.hostName = "k8s-master.govuk-k8s.test";
 
   services.kubernetes = {
+    apiserver.allowPrivileged = true;
     masterAddress = "k8s-master.govuk-k8s.test";
     roles = ["master"];
   };
