@@ -39,6 +39,8 @@ provider "aws" {
 resource "aws_vpc" "cloud" {
   cidr_block = "10.0.0.0/16"
 
+  assign_generated_ipv6_cidr_block = true
+
   enable_dns_support   = true
   enable_dns_hostnames = true
 }
@@ -47,15 +49,26 @@ resource "aws_subnet" "public" {
   vpc_id     = "${aws_vpc.cloud.id}"
   cidr_block = "10.0.255.0/24"
 
-  map_public_ip_on_launch = true
+  ipv6_cidr_block = cidrsubnet(aws_vpc.cloud.ipv6_cidr_block, 8, 255)
+
+  map_public_ip_on_launch         = true
+  assign_ipv6_address_on_creation = true
 }
 
 resource "aws_subnet" "private" {
   vpc_id     = "${aws_vpc.cloud.id}"
   cidr_block = "10.0.0.0/24"
+
+  ipv6_cidr_block = cidrsubnet(aws_vpc.cloud.ipv6_cidr_block, 8, 0)
+
+  assign_ipv6_address_on_creation = true
 }
 
 resource "aws_internet_gateway" "gw" {
+  vpc_id = "${aws_vpc.cloud.id}"
+}
+
+resource "aws_egress_only_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.cloud.id}"
 }
 
@@ -66,10 +79,20 @@ resource "aws_route_table" "rt" {
     cidr_block = "0.0.0.0/0"
     gateway_id = "${aws_internet_gateway.gw.id}"
   }
+
+  route {
+    ipv6_cidr_block        = "::/0"
+    egress_only_gateway_id = "${aws_egress_only_internet_gateway.gw.id}"
+  }
 }
 
-resource "aws_route_table_association" "assoc" {
+resource "aws_route_table_association" "public" {
   subnet_id      = "${aws_subnet.public.id}"
+  route_table_id = "${aws_route_table.rt.id}"
+}
+
+resource "aws_route_table_association" "private" {
+  subnet_id      = "${aws_subnet.private.id}"
   route_table_id = "${aws_route_table.rt.id}"
 }
 
@@ -96,8 +119,8 @@ resource "aws_instance" "jumpbox" {
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
   vpc_security_group_ids = [
-    "${aws_security_group.ssh-external.id}",
-    "${aws_security_group.ssh-internal.id}"
+    "${aws_security_group.external-ssh-ingress.id}",
+    "${aws_security_group.standard.id}"
   ]
 
   tags = {
@@ -105,12 +128,20 @@ resource "aws_instance" "jumpbox" {
   }
 }
 
-resource "aws_route53_record" "jumpbox" {
+resource "aws_route53_record" "jumpbox-ipv4" {
   zone_id = "${aws_route53_zone.external.zone_id}"
   name    = "jumpbox.${aws_route53_zone.external.name}"
   type    = "A"
   ttl     = 300
   records = ["${aws_instance.jumpbox.public_ip}"]
+}
+
+resource "aws_route53_record" "jumpbox-ipv6" {
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "jumpbox.${aws_route53_zone.external.name}"
+  type    = "AAAA"
+  ttl     = 300
+  records = "${aws_instance.jumpbox.ipv6_addresses}"
 }
 
 
@@ -124,8 +155,7 @@ resource "aws_instance" "k8s-master" {
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
   vpc_security_group_ids = [
-    "${aws_security_group.friends.id}",
-    "${aws_security_group.ssh-internal.id}"
+    "${aws_security_group.standard.id}"
   ]
 
   tags = {
@@ -152,8 +182,7 @@ resource "aws_instance" "k8s-slave" {
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
   vpc_security_group_ids = [
-    "${aws_security_group.friends.id}",
-    "${aws_security_group.ssh-internal.id}"
+    "${aws_security_group.standard.id}"
   ]
 
   tags = {
@@ -173,27 +202,8 @@ resource "aws_route53_record" "k8s-slave" {
 /* ************************************************************************* */
 /* security */
 
-resource "aws_security_group" "friends" {
-  name   = "sg_friends"
-  vpc_id = "${aws_vpc.cloud.id}"
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["${aws_subnet.private.cidr_block}"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["${aws_subnet.private.cidr_block}"]
-  }
-}
-
-resource "aws_security_group" "ssh-external" {
-  name   = "sg_ssh-external"
+resource "aws_security_group" "external-ssh-ingress" {
+  name   = "sg_external-ssh-ingress"
   vpc_id = "${aws_vpc.cloud.id}"
 
   ingress {
@@ -201,31 +211,43 @@ resource "aws_security_group" "ssh-external" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+
+    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
-resource "aws_security_group" "ssh-internal" {
-  name   = "sg_ssh-internal"
+resource "aws_security_group" "standard" {
+  name   = "sg_standard"
   vpc_id = "${aws_vpc.cloud.id}"
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [
-      "${aws_subnet.public.cidr_block}",
-      "${aws_subnet.private.cidr_block}"
-    ]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["${aws_vpc.cloud.cidr_block}"]
   }
 
   egress {
-    from_port   = 22
-    to_port     = 22
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [
-      "${aws_subnet.public.cidr_block}",
-      "${aws_subnet.private.cidr_block}"
-    ]
+    cidr_blocks = ["0.0.0.0/0"]
+
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["${aws_vpc.cloud.cidr_block}"]
   }
 }
 
