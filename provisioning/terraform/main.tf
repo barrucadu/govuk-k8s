@@ -114,7 +114,7 @@ resource "aws_route53_zone" "internal" {
 
 resource "aws_instance" "jumpbox" {
   ami           = "${var.ec2_ami}"
-  instance_type = "t3.micro"
+  instance_type = "t3.medium"
   subnet_id     = "${aws_subnet.public.id}"
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
@@ -125,6 +125,10 @@ resource "aws_instance" "jumpbox" {
 
   tags = {
     name = "jumpbox"
+  }
+
+  root_block_device {
+    volume_size = 10
   }
 }
 
@@ -150,7 +154,7 @@ resource "aws_route53_record" "jumpbox-ipv6" {
 
 resource "aws_instance" "k8s-master" {
   ami           = "${var.ec2_ami}"
-  instance_type = "t3.micro"
+  instance_type = "t3.medium"
   subnet_id     = "${aws_subnet.private.id}"
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
@@ -160,6 +164,10 @@ resource "aws_instance" "k8s-master" {
 
   tags = {
     name = "k8s-master"
+  }
+
+  root_block_device {
+    volume_size = 10
   }
 }
 
@@ -187,6 +195,10 @@ resource "aws_instance" "k8s-slave" {
 
   tags = {
     name = "k8s-slave"
+  }
+
+  root_block_device {
+    volume_size = 10
   }
 }
 

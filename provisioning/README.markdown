@@ -24,8 +24,8 @@ instances, domain names, and security rules:
 
 | Name         | Type        | Visibility         | Purpose                        |
 | ------------ | ----------- | ------------------ | ------------------------------ |
-| `jumpbox`    | `t3.micro`  | internal, external | external entry point to VPC    |
-| `k8s-master` | `t3.micro`  | internal           | orchestrates k8s cluster       |
+| `jumpbox`    | `t3.medium` | internal, external | external entry point to VPC    |
+| `k8s-master` | `t3.medium` | internal           | orchestrates k8s cluster       |
 | `k8s-slave`  | `m5.xlarge` | internal           | runs k8s workloads             |
 
 The `jumpbox` is accessible to SSH externally, and can SSH into all
