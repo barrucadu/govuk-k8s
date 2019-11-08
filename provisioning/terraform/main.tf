@@ -321,3 +321,7 @@ output "public_ip" {
 output "k8s_slaves" {
   value = "${var.k8s_slaves}"
 }
+
+output "name_servers" {
+  value = "${aws_route53_zone.external.name_servers}"
+}
