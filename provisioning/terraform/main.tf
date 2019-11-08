@@ -148,6 +148,14 @@ resource "aws_route53_record" "jumpbox-ipv6" {
   records = "${aws_instance.jumpbox.ipv6_addresses}"
 }
 
+resource "aws_route53_record" "jumpbox" {
+  zone_id = "${aws_route53_zone.internal.zone_id}"
+  name    = "jumpbox.${aws_route53_zone.internal.name}"
+  type    = "A"
+  ttl     = 300
+  records = ["${aws_instance.jumpbox.private_ip}"]
+}
+
 
 /* ************************************************************************* */
 /* k8s-master */
