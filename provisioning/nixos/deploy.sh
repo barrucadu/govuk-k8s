@@ -11,7 +11,10 @@ function build_host () {
 set -ex
 
 build_host k8s-master k8s-master
-build_host k8s-slave  k8s-slave
+secret=$(ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no k8s-master.govuk-k8s.test cat /var/lib/kubernetes/secrets/apitoken.secret)
+
+build_host k8s-slave k8s-slave
+echo $secret | ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no k8s-slave.govuk-k8s.test nixos-kubernetes-node-join
 
 cp nixos/common.nix  /etc/nixos/common.nix
 cp nixos/jumpbox.nix /etc/nixos/configuration.nix
