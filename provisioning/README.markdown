@@ -8,13 +8,14 @@ Pre-requisites:
 
 Scripts:
 
-- `./create.sh` - run terraform, ssh into machines, build NixOS config
+- `./create.sh` - run `deploy-*` scripts
 - `./deploy-terraform.sh` - deploy terraform changes
 - `./deploy-nixos.sh` - deploy NixOS changes
+- `./shrink.sh` - tear down everything but the public DNS zone and egress IP ranges
 - `./destroy.sh` - tear down the cluster
 
-You should destroy your cluster at the end of every tinkering session
-to avoid spending unnecessary money.
+You should shrink or destroy your cluster at the end of every
+tinkering session to avoid spending unnecessary money.
 
 
 Architecture
@@ -69,3 +70,21 @@ The `web` instance can serve HTTPS, if your DNS records have
 propagated: check that `web.${external_domain_name}` resolves first.
 Then set `enableHTTPS` and, optionally, `forceHTTPS` in
 `nixos/common.nix` and run `deploy-nixos.sh`.
+
+
+£££
+---
+
+To save some money, run `shrink.sh` when the cluster isn't needed.
+This script tears down everything except:
+
+- The VPC
+- The internet gateway
+- The IPv6 egress gateway
+- The Elastic IP used for NAT
+- The external DNS zone
+
+This is the minimal set of resources needed so that NS records and
+egress IP ranges don't change.
+
+Bring the cluster back by running `create.sh`.
