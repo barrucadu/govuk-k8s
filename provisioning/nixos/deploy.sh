@@ -19,7 +19,6 @@ for i in $(seq 0 "$((SLAVES - 1))"); do
   cp nixos/k8s-slave.nix "nixos/${slave_host}.nix"
   sed -i "s#HOSTNAME_PLACEHOLDER#${slave_host}#" "nixos/${slave_host}.nix"
   build_host "${slave_host}"
-  echo $secret | ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${slave_host}.govuk-k8s.test" nixos-kubernetes-node-join
 done
 
 build_host web
