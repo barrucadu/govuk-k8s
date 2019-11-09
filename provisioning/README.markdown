@@ -11,7 +11,7 @@ Scripts:
 - `./create.sh` - run `deploy-*` scripts
 - `./deploy-terraform.sh` - deploy terraform changes
 - `./deploy-nixos.sh` - deploy NixOS changes
-- `./deploy-k8s.sh` - join slaves to cluster
+- `./deploy-k8s.sh` - configure master and join slaves to cluster
 - `./shrink.sh` - tear down everything but the public DNS zone and egress IP ranges
 - `./destroy.sh` - tear down the cluster
 
