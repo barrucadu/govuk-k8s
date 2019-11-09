@@ -14,9 +14,8 @@ done
 scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -r k8s/ "${MASTER}:"
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "$MASTER" <<EOF
 set -ex
-echo "KUBECONFIG=/etc/kubernetes/cluster-admin.kubeconfig" > .bashrc
+echo "export KUBECONFIG=/etc/kubernetes/cluster-admin.kubeconfig" > .bashrc
 source .bashrc
-export KUBECONFIG
 kubectl apply -f k8s/helm-rbac.yaml
 helm init --service-account=tiller
 EOF
