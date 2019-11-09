@@ -25,16 +25,13 @@ Architecture
 The terraform defines a VPC (virtual private cloud) some EC2
 instances, domain names, and security rules:
 
-| Name          | Type        | Visibility         | Purpose                        |
-| ------------- | ----------- | ------------------ | ------------------------------ |
-| `jumpbox`     | `t3.medium` | internal, external | external entry point to VPC    |
-| `k8s-master`  | `t3.medium` | internal           | orchestrates k8s cluster       |
-| `k8s-slave-0` | `m5.xlarge` | internal           | runs k8s workloads             |
-| `k8s-slave-1` | `m5.xlarge` | internal           | runs k8s workloads             |
-
-The `jumpbox` is accessible to SSH externally, and can SSH into all
-the internal machines.  The internal machines are not accessible
-externally.
+| Name          | Type        | Visibility         | Purpose                    |
+| ------------- | ----------- | ------------------ | -------------------------- |
+| `jumpbox`     | `t3.medium` | internal, external | SSH entry point to VPC     |
+| `web`         | `t3.medium` | internal, external | HTTP(S) entry point to VPC |
+| `k8s-master`  | `t3.medium` | internal           | orchestrates k8s cluster   |
+| `k8s-slave-0` | `m5.xlarge` | internal           | runs k8s workloads         |
+| `k8s-slave-1` | `m5.xlarge` | internal           | runs k8s workloads         |
 
 Internal domains are subdomains of `govuk-k8s.test`: [`.test` is a
 reserved TLD][] so this will not clash with any real-world domains.
