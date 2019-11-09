@@ -2,6 +2,11 @@
 
 set -e
 
+if [[ ! -e main.tf ]]; then
+    echo "run me from the terraform directory"
+    exit 1
+fi
+
 SSH_IP="$(terraform output public-ssh-ip)"
 WEB_IP="$(terraform output public-web-ip)"
 EXTERNAL_DOMAIN="$(terraform output external-domain)"
