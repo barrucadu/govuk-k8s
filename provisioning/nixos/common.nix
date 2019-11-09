@@ -16,6 +16,8 @@
   config = {
     ec2.hvm = true;
 
+    networking.hostName = "HOSTNAME_PLACEHOLDER";
+
     # we have security groups
     networking.firewall.enable = false;
 

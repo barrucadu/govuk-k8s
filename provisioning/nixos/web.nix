@@ -64,8 +64,6 @@ in
 {
   imports = [ ./common.nix ];
 
-  networking.hostName = "web.govuk-k8s.test";
-
   services.nginx = {
     enable = true;
     package = nginx_with_brotli;
