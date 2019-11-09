@@ -28,6 +28,11 @@ variable "k8s_slaves" {
   default = 2
 }
 
+variable "web_subdomains" {
+  type    = list
+  default = ["live", "management"]
+}
+
 
 /* ************************************************************************* */
 /* provider */
@@ -238,6 +243,19 @@ resource "aws_route53_record" "web-ipv4-star" {
   }
 }
 
+resource "aws_route53_record" "web-ipv4-subdomain-star" {
+  count   = length(var.web_subdomains)
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "*.${var.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
+  type    = "A"
+
+  alias {
+    zone_id = "${aws_route53_record.web-ipv4.zone_id}"
+    name    = "${aws_route53_record.web-ipv4.name}"
+    evaluate_target_health = true
+  }
+}
+
 resource "aws_route53_record" "web-ipv6" {
   zone_id = "${aws_route53_zone.external.zone_id}"
   name    = "web.${aws_route53_zone.external.name}"
@@ -249,6 +267,19 @@ resource "aws_route53_record" "web-ipv6" {
 resource "aws_route53_record" "web-ipv6-star" {
   zone_id = "${aws_route53_zone.external.zone_id}"
   name    = "*.web.${aws_route53_zone.external.name}"
+  type    = "AAAA"
+
+  alias {
+    zone_id = "${aws_route53_record.web-ipv6.zone_id}"
+    name    = "${aws_route53_record.web-ipv6.name}"
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "web-ipv6-subdomain-star" {
+  count   = length(var.web_subdomains)
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "*.${var.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
   type    = "AAAA"
 
   alias {

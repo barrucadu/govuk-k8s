@@ -50,6 +50,7 @@ You may want to customise the following terraform variables:
 | `external_domain_name`         | `govuk-k8s.barrucadu.co.uk`       | publicly-visible domains will be a subdomain of this |
 | `provisioning_public_key_file` | `/home/barrucadu/.ssh/id_rsa.pub` | SSH public key to use for provisioning               |
 | `k8s_slaves`                   | `2`                               | number of k8s-slave instances to create              |
+| `web_subdomains`               | `["live", "management"]`          | add DNS records for *.subdomain and * to the web box |
 
 The `external_domain_name` is also specified in `nixos/common.nix`,
 and must be kept in sync with the value in terraform.
