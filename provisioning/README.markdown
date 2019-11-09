@@ -57,9 +57,23 @@ and must be kept in sync with the value in terraform.
 DNS
 ---
 
-Terraform will create a DNS zone for the external domain and give you
-a list of nameservers.  To make that domain work across the wider
-internet, create NS records in wherever you host the rest of your DNS.
+The following A and AAAA records are created:
+
+| Record             | Type    | Zone     | Target         |
+| ------------------ | ------- | -------- | -------------- |
+| `jumpbox`          | A, AAAA | external | `jumpbox`      |
+| `web`              | A, AAAA | external | `web`          |
+| `*.web`            | A, AAAA | external | `web`          |
+| `*.live.web`       | A, AAAA | external | `web`          |
+| `*.management.web` | A, AAAA | external | `web`          |
+| `jumpbox`          | A       | internal | `jumpbox`      |
+| `web`              | A       | internal | `web`          |
+| `k8s-master`       | A       | internal | `k8s-master`   |
+| `k8s-slave-$n`     | A       | internal | `k8s-slave-$n` |
+
+To make the external domains work across the wider internet, you need
+to configure NS records wherever you host the DNS for that domain.
+`create.sh` and `terraform/info.sh` scripts can tell you those.
 
 
 HTTPS
