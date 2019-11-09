@@ -1,5 +1,3 @@
-{ pkgs, ... }:
-
 {
   imports = [ ./common.nix ];
 
@@ -9,8 +7,4 @@
     masterAddress = "k8s-master.govuk-k8s.test";
     roles = ["node"];
   };
-
-  environment.systemPackages = [
-    pkgs.kubectl
-  ];
 }
