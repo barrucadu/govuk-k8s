@@ -131,24 +131,20 @@ resource "aws_route53_zone" "internal" {
 /* ************************************************************************* */
 /* jumpbox */
 
-resource "aws_instance" "jumpbox" {
-  ami           = "${var.ec2_ami}"
-  instance_type = "t3.medium"
-  subnet_id     = "${aws_subnet.public.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
+module "jumpbox" {
+  source = "./node_group"
 
-  vpc_security_group_ids = [
+  name      = "jumpbox"
+  subnet_id = "${aws_subnet.public.id}"
+  key_name  = "${aws_key_pair.provisioning.key_name}"
+
+  security_group_ids = [
     "${aws_security_group.external-ssh-ingress.id}",
     "${aws_security_group.standard.id}"
   ]
 
-  tags = {
-    name = "jumpbox"
-  }
-
-  root_block_device {
-    volume_size = 10
-  }
+  route53_zone_name = "${aws_route53_zone.internal.name}"
+  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 }
 
 resource "aws_route53_record" "jumpbox-ipv4" {
@@ -156,39 +152,27 @@ resource "aws_route53_record" "jumpbox-ipv4" {
   name    = "jumpbox.${aws_route53_zone.external.name}"
   type    = "A"
   ttl     = 300
-  records = ["${aws_instance.jumpbox.public_ip}"]
-}
-
-resource "aws_route53_record" "jumpbox" {
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "jumpbox.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.jumpbox.private_ip}"]
+  records = ["${module.jumpbox.public_ip}"]
 }
 
 
 /* ************************************************************************* */
 /* web */
 
-resource "aws_instance" "web" {
-  ami           = "${var.ec2_ami}"
-  instance_type = "t3.medium"
-  subnet_id     = "${aws_subnet.public.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
+module "web" {
+  source = "./node_group"
 
-  vpc_security_group_ids = [
+  name      = "web"
+  subnet_id = "${aws_subnet.public.id}"
+  key_name  = "${aws_key_pair.provisioning.key_name}"
+
+  security_group_ids = [
     "${aws_security_group.external-web-ingress.id}",
     "${aws_security_group.standard.id}"
   ]
 
-  tags = {
-    name = "web"
-  }
-
-  root_block_device {
-    volume_size = 10
-  }
+  route53_zone_name = "${aws_route53_zone.internal.name}"
+  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 }
 
 resource "aws_route53_record" "web-ipv4" {
@@ -196,7 +180,7 @@ resource "aws_route53_record" "web-ipv4" {
   name    = "web.${aws_route53_zone.external.name}"
   type    = "A"
   ttl     = 300
-  records = ["${aws_instance.web.public_ip}"]
+  records = ["${module.web.public_ip}"]
 }
 
 resource "aws_route53_record" "web-ipv4-star" {
@@ -224,36 +208,27 @@ resource "aws_route53_record" "web-ipv4-subdomain-star" {
   }
 }
 
-resource "aws_route53_record" "web" {
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "web.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.web.private_ip}"]
-}
-
 
 /* ************************************************************************* */
 /* ci */
 
-resource "aws_instance" "ci" {
-  ami           = "${var.ec2_ami}"
-  instance_type = "m5.xlarge"
-  subnet_id     = "${aws_subnet.public.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
+module "ci" {
+  source = "./node_group"
 
-  vpc_security_group_ids = [
+  name      = "ci"
+  subnet_id = "${aws_subnet.public.id}"
+  key_name  = "${aws_key_pair.provisioning.key_name}"
+
+  security_group_ids = [
     "${aws_security_group.external-web-ingress.id}",
     "${aws_security_group.standard.id}"
   ]
 
-  tags = {
-    name = "ci"
-  }
+  route53_zone_name = "${aws_route53_zone.internal.name}"
+  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
-  root_block_device {
-    volume_size = 25
-  }
+  instance_root_size = 25
+  instance_type      = "m5.xlarge"
 }
 
 resource "aws_route53_record" "ci-ipv4" {
@@ -261,171 +236,128 @@ resource "aws_route53_record" "ci-ipv4" {
   name    = "ci.${aws_route53_zone.external.name}"
   type    = "A"
   ttl     = 300
-  records = ["${aws_instance.ci.public_ip}"]
-}
-
-resource "aws_route53_record" "ci" {
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "ci.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.ci.private_ip}"]
+  records = ["${module.ci.public_ip}"]
 }
 
 
 /* ************************************************************************* */
 /* registry */
 
-resource "aws_instance" "registry" {
-  ami           = "${var.ec2_ami}"
-  instance_type = "t3.medium"
-  subnet_id     = "${aws_subnet.private.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
+module "registry" {
+  source = "./node_group"
 
-  vpc_security_group_ids = [
+  name      = "registry"
+  subnet_id = "${aws_subnet.private.id}"
+  key_name  = "${aws_key_pair.provisioning.key_name}"
+
+  security_group_ids = [
     "${aws_security_group.standard.id}"
   ]
 
-  tags = {
-    name = "registry"
-  }
+  route53_zone_name = "${aws_route53_zone.internal.name}"
+  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
-  root_block_device {
-    volume_size = 25
-  }
-}
-
-resource "aws_route53_record" "registry" {
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "registry.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.registry.private_ip}"]
+  instance_root_size = 25
 }
 
 
 /* ************************************************************************* */
 /* k8s-master */
 
-resource "aws_instance" "k8s-master" {
-  ami           = "${var.ec2_ami}"
-  instance_type = "t3.medium"
-  subnet_id     = "${aws_subnet.private.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
+module "k8s-master" {
+  source = "./node_group"
 
-  iam_instance_profile = "${aws_iam_instance_profile.k8s-master.name}"
+  name      = "k8s-master"
+  subnet_id = "${aws_subnet.private.id}"
+  key_name  = "${aws_key_pair.provisioning.key_name}"
 
-  vpc_security_group_ids = [
+  security_group_ids = [
     "${aws_security_group.standard.id}"
   ]
 
-  tags = {
-    name              = "k8s-master"
+  role_policy_arns = [
+    "${aws_iam_policy.k8s-master-ebs-policy.arn}"
+  ]
+
+  route53_zone_name = "${aws_route53_zone.internal.name}"
+  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
+
+  extra_tags = {
     KubernetesCluster = "govuk-k8s"
   }
+}
 
-  root_block_device {
-    volume_size = 10
+resource "aws_iam_policy" "k8s-master-ebs-policy" {
+  name   = "k8s-master-ebs-policy"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.k8s-master-ebs-policy.json}"
+}
+
+data "aws_iam_policy_document" "k8s-master-ebs-policy" {
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:AttachVolume",
+      "ec2:DetachVolume",
+      "ec2:DescribeVolumes",
+      "ec2:CreateVolume",
+      "ec2:DeleteVolume",
+      "ec2:CreateTags",
+      "ec2:DescribeSecurityGroups",
+    ]
+
+    resources = ["*"]
   }
-}
-
-resource "aws_route53_record" "k8s-master" {
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "k8s-master.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.k8s-master.private_ip}"]
-}
-
-resource "aws_iam_instance_profile" "k8s-master" {
-  name = "k8s-master-profile"
-  role = "${aws_iam_role.k8s-master.name}"
-}
-
-resource "aws_iam_role" "k8s-master" {
-  name = "k8s-master-role"
-  path = "/"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
 }
 
 
 /* ************************************************************************* */
 /* k8s-slave */
 
-resource "aws_instance" "k8s-slave" {
-  count = "${var.k8s_slaves}"
+module "k8s-slave" {
+  source = "./node_group"
 
-  ami           = "${var.ec2_ami}"
-  instance_type = "m5.xlarge"
-  subnet_id     = "${aws_subnet.private.id}"
-  key_name      = "${aws_key_pair.provisioning.key_name}"
+  name      = "k8s-slave"
+  instances = "${var.k8s_slaves}"
+  subnet_id = "${aws_subnet.private.id}"
+  key_name  = "${aws_key_pair.provisioning.key_name}"
 
-  iam_instance_profile = "${aws_iam_instance_profile.k8s-slave.name}"
-
-  vpc_security_group_ids = [
+  security_group_ids = [
     "${aws_security_group.standard.id}"
   ]
 
-  tags = {
-    name              = "k8s-slave"
-    index             = "${count.index}"
+  role_policy_arns = [
+    "${aws_iam_policy.k8s-slave-ebs-policy.arn}"
+  ]
+
+  route53_zone_name = "${aws_route53_zone.internal.name}"
+  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
+
+  instance_type = "m5.xlarge"
+
+  extra_tags = {
     KubernetesCluster = "govuk-k8s"
   }
+}
 
-  root_block_device {
-    volume_size = 10
+resource "aws_iam_policy" "k8s-slave-ebs-policy" {
+  name   = "k8s-slave-ebs-policy"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.k8s-slave-ebs-policy.json}"
+}
+
+data "aws_iam_policy_document" "k8s-slave-ebs-policy" {
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:AttachVolume",
+      "ec2:DetachVolume",
+      "ec2:DescribeVolumes",
+      "ec2:DescribeSecurityGroups",
+    ]
+
+    resources = ["*"]
   }
-}
-
-resource "aws_route53_record" "k8s-slave" {
-  count = "${var.k8s_slaves}"
-
-  zone_id = "${aws_route53_zone.internal.zone_id}"
-  name    = "k8s-slave-${count.index}.${aws_route53_zone.internal.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.k8s-slave[count.index].private_ip}"]
-}
-
-resource "aws_iam_instance_profile" "k8s-slave" {
-  name = "k8s-slave-profile"
-  role = "${aws_iam_role.k8s-slave.name}"
-}
-
-resource "aws_iam_role" "k8s-slave" {
-  name = "k8s-slave-role"
-  path = "/"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
 }
 
 
@@ -495,63 +427,6 @@ resource "aws_security_group" "standard" {
 
 
 /* ************************************************************************* */
-/* k8s storage auto-provisioning */
-
-resource "aws_iam_role_policy_attachment" "k8s-master-ebs-policy" {
-  role       = "${aws_iam_role.k8s-master.name}"
-  policy_arn = "${aws_iam_policy.k8s-master-ebs-policy.arn}"
-}
-
-resource "aws_iam_policy" "k8s-master-ebs-policy" {
-  name   = "k8s-master-ebs-policy"
-  path   = "/"
-  policy = "${data.aws_iam_policy_document.k8s-master-ebs-policy.json}"
-}
-
-data "aws_iam_policy_document" "k8s-master-ebs-policy" {
-  statement {
-    actions = [
-      "ec2:DescribeInstances",
-      "ec2:AttachVolume",
-      "ec2:DetachVolume",
-      "ec2:DescribeVolumes",
-      "ec2:CreateVolume",
-      "ec2:DeleteVolume",
-      "ec2:CreateTags",
-      "ec2:DescribeSecurityGroups",
-    ]
-
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "k8s-slave-ebs-policy" {
-  role       = "${aws_iam_role.k8s-slave.name}"
-  policy_arn = "${aws_iam_policy.k8s-slave-ebs-policy.arn}"
-}
-
-resource "aws_iam_policy" "k8s-slave-ebs-policy" {
-  name   = "k8s-slave-ebs-policy"
-  path   = "/"
-  policy = "${data.aws_iam_policy_document.k8s-slave-ebs-policy.json}"
-}
-
-data "aws_iam_policy_document" "k8s-slave-ebs-policy" {
-  statement {
-    actions = [
-      "ec2:DescribeInstances",
-      "ec2:AttachVolume",
-      "ec2:DetachVolume",
-      "ec2:DescribeVolumes",
-      "ec2:DescribeSecurityGroups",
-    ]
-
-    resources = ["*"]
-  }
-}
-
-
-/* ************************************************************************* */
 /* miscellaneous */
 
 resource "aws_key_pair" "provisioning" {
@@ -584,11 +459,11 @@ output "vpc-private-id" {
 }
 
 output "public-ssh-ip" {
-  value = "${aws_instance.jumpbox.public_ip}"
+  value = "${module.jumpbox.public_ip}"
 }
 
 output "public-web-ip" {
-  value = "${aws_instance.web.public_ip}"
+  value = "${module.web.public_ip}"
 }
 
 output "k8s_slaves" {
