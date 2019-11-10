@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: live
+  labels:
+    name: live
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: govuk
+  labels:
+    name: govuk

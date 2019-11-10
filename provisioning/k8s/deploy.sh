@@ -16,7 +16,8 @@ ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "$MASTER" <<EOF
 set -ex
 echo "export KUBECONFIG=/etc/kubernetes/cluster-admin.kubeconfig" > .bashrc
 source .bashrc
-kubectl apply -f k8s/ebs.yaml
-kubectl apply -f k8s/helm-rbac.yaml
+for file in k8s/*.yaml; do
+  kubectl apply -f \$file
+done
 helm init --service-account=tiller
 EOF
