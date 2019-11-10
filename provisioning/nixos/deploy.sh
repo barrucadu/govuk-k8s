@@ -4,7 +4,7 @@ SLAVES="$1"
 
 function build_host () {
   host="$1"
-  config="$2"
+  config="${2:-$host}"
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "nixos/common.nix"    "${host}.govuk-k8s.test:/etc/nixos/common.nix"
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "nixos/${config}.nix" "${host}.govuk-k8s.test:/etc/nixos/configuration.nix"
   ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${host}.govuk-k8s.test" <<EOF
@@ -23,8 +23,8 @@ for i in $(seq 0 "$((SLAVES - 1))"); do
   build_host "k8s-slave-${i}" k8s-slave
 done
 
-build_host k8s-master k8s-master
-build_host ci ci
-build_host registry registry
-build_host web web
-build_host jumpbox jumpbox
+build_host k8s-master
+build_host ci
+build_host registry
+build_host web
+build_host jumpbox
