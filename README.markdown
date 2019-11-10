@@ -18,7 +18,7 @@ Tools used:
 - [NixOS][], to configure the infrastructure underpinning k8s.
 
 See the `provisioning/` directory to set up a cluster from scratch in
-AWS.
+AWS and the `kubernetes/` directory to deploy services to it.
 
 [GOV.UK]: https://www.gov.uk
 [govuk-docker]: https://github.com/alphagov/govuk-docker
