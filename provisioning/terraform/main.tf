@@ -1,32 +1,10 @@
-variable "aws_region" {
-  type    = string
-  default = "eu-west-2"
-}
-
-variable "aws_profile" {
-  type    = string
-  default = "govuk-k8s"
-}
-
-variable "ec2_ami" {
-  type    = string
-  default = "ami-02a2b5480a79084b7"
-}
-
-variable "external_domain_name" {
-  type    = string
-  default = "govuk-k8s.barrucadu.co.uk"
-}
-
-variable "provisioning_public_key_file" {
-  type    = string
-  default = "/home/barrucadu/.ssh/id_rsa.pub"
-}
-
-variable "k8s_slaves" {
-  type    = number
-  default = 2
-}
+# These are filled in by the generated terraform.tfvars
+variable "aws_region"           { type = string }
+variable "aws_profile"          { type = string }
+variable "ec2_ami"              { type = string }
+variable "external_domain_name" { type = string }
+variable "public_key_file"      { type = string }
+variable "k8s_slaves"           { type = number }
 
 locals {
   web_subdomains = ["live"]
@@ -431,7 +409,7 @@ resource "aws_security_group" "standard" {
 
 resource "aws_key_pair" "provisioning" {
   key_name   = "provisioning"
-  public_key = "${file("${var.provisioning_public_key_file}")}"
+  public_key = "${file("${var.public_key_file}")}"
 }
 
 

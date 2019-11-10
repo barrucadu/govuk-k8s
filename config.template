@@ -1,0 +1,57 @@
+##
+# GOV.UK on Kubernetes
+##
+
+# This configuration file is a shell script which is sourced and used
+# to generate terraform.tfvars and vars.nix.
+
+## Infrastructure
+
+# AWS region
+AWS_REGION="eu-west-2"
+
+# AWS profile
+AWS_PROFILE="govuk-k8s"
+
+# EC2 AMI (this has to be a NixOS image)
+EC2_AMI="ami-02a2b5480a79084b7"
+
+# External domain name
+EXTERNAL_DOMAIN_NAME=""
+
+# Path to SSH public key file for root
+PUBLIC_KEY_FILE=""
+
+# Number of k8s slave nodes
+K8S_SLAVES="2"
+
+## Web
+
+# Enable HTTPS
+#
+# Turn this on once DNS has propagated, regenerate the configuration
+# file, and run provisioning/deploy-nixos.sh.
+ENABLE_HTTPS="false"
+
+# Force HTTPS, if it's enabled
+FORCE_HTTPS="true"
+
+## CI
+
+# Github username
+GITHUB_USER=""
+
+# GitHub OAuth client ID and secret.
+#
+# Create an OAuth app by going to:
+#
+#     Settings ->
+#     Developer settings ->
+#     OAuth Apps ->
+#     New OAuth App
+#
+# For the callback URL use the path "/sky/issuer/callback" on your
+# external URL.  For example,
+# "http://concourse.govuk-k8s.web.barrucadu.co.uk/sky/issuer/callback"
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""

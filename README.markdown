@@ -17,11 +17,25 @@ Tools used:
 - [Terraform][], to create the infrastructure underpinning k8s.
 - [NixOS][], to configure the infrastructure underpinning k8s.
 
-See the `provisioning/` directory to set up a cluster from scratch in
-AWS and the `kubernetes/` directory to deploy services to it.
-
 [GOV.UK]: https://www.gov.uk
 [govuk-docker]: https://github.com/alphagov/govuk-docker
 [Kubernetes]: https://kubernetes.io/
 [Terraform]: https://www.terraform.io/
 [NixOS]: https://nixos.org/
+
+
+Set-up
+------
+
+```bash
+# Generate config file based on the comments
+cp config.template config
+nano config
+
+# Generate Terraform and NixOS configurations
+./generate-config.sh
+
+# Conjure infrastructure out of thin air
+cd provisioning
+./create.sh
+```

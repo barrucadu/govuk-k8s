@@ -3,24 +3,25 @@
 {
   imports = [
     <nixpkgs/nixos/modules/virtualisation/amazon-image.nix>
+    ./vars.nix
   ];
 
+  # These are filled in by the generated vars.nix
   options = {
     govuk-k8s = {
-      externalDomainName = lib.mkOption { default = "govuk-k8s.barrucadu.co.uk"; };
-
-      enableHTTPS = lib.mkOption { default = false; };
-      forceHTTPS  = lib.mkOption { default = false; };
-
-      concourseGithubUser = lib.mkOption { default = "placeholder"; };
-      concourseGithubClientId = lib.mkOption { default = "placeholder"; };
-      concourseGithubClientSecret = lib.mkOption { default = "placeholder"; };
+      externalDomainName          = lib.mkOption {};
+      enableHTTPS                 = lib.mkOption {};
+      forceHTTPS                  = lib.mkOption {};
+      concourseGithubUser         = lib.mkOption {};
+      concourseGithubClientId     = lib.mkOption {};
+      concourseGithubClientSecret = lib.mkOption {};
     };
   };
 
   config = {
     ec2.hvm = true;
 
+    # this is replaced with the EC2 hostname
     networking.hostName = "HOSTNAME_PLACEHOLDER";
 
     # we have security groups

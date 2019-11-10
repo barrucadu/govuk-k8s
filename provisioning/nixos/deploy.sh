@@ -5,6 +5,7 @@ SLAVES="$1"
 function build_host () {
   host="$1"
   config="${2:-$host}"
+  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "nixos/vars.nix"      "${host}.govuk-k8s.test:/etc/nixos/vars.nix"
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "nixos/common.nix"    "${host}.govuk-k8s.test:/etc/nixos/common.nix"
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "nixos/${config}.nix" "${host}.govuk-k8s.test:/etc/nixos/configuration.nix"
   ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${host}.govuk-k8s.test" <<EOF

@@ -23,7 +23,9 @@ Architecture
 ------------
 
 The terraform defines a VPC (virtual private cloud) some EC2
-instances, domain names, and security rules:
+instances, domain names, and security rules.
+
+The default configuration is:
 
 | Name          | Type        | Visibility         | Purpose                    |
 | ------------- | ----------- | ------------------ | -------------------------- |
@@ -35,30 +37,13 @@ instances, domain names, and security rules:
 | `k8s-slave-0` | `m5.xlarge` | internal           | runs k8s workloads         |
 | `k8s-slave-1` | `m5.xlarge` | internal           | runs k8s workloads         |
 
-Internal domains are subdomains of `govuk-k8s.test`: [`.test` is a
-reserved TLD][] so this will not clash with any real-world domains.
+Each machine gets an internal DNS record of `${name}.govuk-k8s.test`.
+[`.test` is a reserved TLD][] so this will not clash with any
+real-world domains.
 
 [`.test` is a reserved TLD]: https://tools.ietf.org/html/rfc2606
 
-You may want to customise the following terraform variables:
-
-| Variable                       | Default                           | Meaning                                              |
-| ------------------------------ | --------------------------------- | ---------------------------------------------------- |
-| `aws_region`                   | `eu-west-2`                       | where the infrastructure is created                  |
-| `aws_profile`                  | `govuk-k8s`                       | credentials profile to use                           |
-| `ec2_ami`                      | `ami-02a2b5480a79084b7`           | AMI to use (region-specific)                         |
-| `external_domain_name`         | `govuk-k8s.barrucadu.co.uk`       | publicly-visible domains will be a subdomain of this |
-| `provisioning_public_key_file` | `/home/barrucadu/.ssh/id_rsa.pub` | SSH public key to use for provisioning               |
-| `k8s_slaves`                   | `2`                               | number of k8s-slave instances to create              |
-
-The `external_domain_name` is also specified in `nixos/common.nix`,
-and must be kept in sync with the value in terraform.
-
-
-DNS
----
-
-The following DNS records are created:
+With these DNS records:
 
 | Record             | Type | Zone     | Target         |
 | ------------------ | ---- | -------- | -------------- |
@@ -77,14 +62,6 @@ The following DNS records are created:
 To make the external domains work across the wider internet, you need
 to configure NS records wherever you host the DNS for that domain.
 `create.sh` and `terraform/info.sh` scripts can tell you those.
-
-
-HTTPS
------
-
-The `ci` and `web` instances can serve HTTPS, if your DNS records have
-propagated.  Set `enableHTTPS` and, optionally, `forceHTTPS` in
-`nixos/common.nix` and run `deploy-nixos.sh`.
 
 
 £££

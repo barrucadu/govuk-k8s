@@ -1,16 +1,13 @@
 variable "aws_region" {
-  type    = string
-  default = "eu-west-2"
+  type = string
 }
 
 variable "aws_profile" {
-  type    = string
-  default = "govuk-k8s"
+  type = string
 }
 
 variable "external_domain_name" {
-  type    = string
-  default = "govuk-k8s.barrucadu.co.uk"
+  type = string
 }
 
 
