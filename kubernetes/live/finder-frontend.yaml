@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: finder-frontend
+spec:
+  selector:
+    run: finder-frontend
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      nodePort: 31006
+  type: NodePort
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finder-frontend
+spec:
+  selector:
+    matchLabels:
+      run: finder-frontend
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        run: finder-frontend
+    spec:
+      containers:
+        - name: finder-frontend
+          image: registry.govuk-k8s.test:5000/finder-frontend
+          env:
+            - name: PLEK_SERVICE_SEARCH_URI
+              value: https://www.gov.uk/api
+            - name: PLEK_SERVICE_WHITEHALL_ADMIN_URI
+              value: https://www.gov.uk
+            - name: GOVUK_WEBSITE_ROOT
+              value: https://www.gov.uk
+            - name: PLEK_SERVICE_CONTENT_STORE_URI
+              value: https://www.gov.uk/api
+            - name: PLEK_SERVICE_STATIC_URI
+              value: assets.publishing.service.gov.uk
+            - name: K8S_HOSTNAMES
+              value: finder-frontend.live.web.govuk-k8s.barrucadu.co.uk
+            - name: HOST
+              value: 0.0.0.0
+          ports:
+            - containerPort: 3000
+              protocol: TCP
