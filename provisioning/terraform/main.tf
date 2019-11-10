@@ -307,12 +307,15 @@ resource "aws_instance" "k8s-master" {
   subnet_id     = "${aws_subnet.private.id}"
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
+  iam_instance_profile = "${aws_iam_instance_profile.k8s-master.name}"
+
   vpc_security_group_ids = [
     "${aws_security_group.standard.id}"
   ]
 
   tags = {
-    name = "k8s-master"
+    name              = "k8s-master"
+    KubernetesCluster = "govuk-k8s"
   }
 
   root_block_device {
@@ -328,6 +331,32 @@ resource "aws_route53_record" "k8s-master" {
   records = ["${aws_instance.k8s-master.private_ip}"]
 }
 
+resource "aws_iam_instance_profile" "k8s-master" {
+  name = "k8s-master-profile"
+  role = "${aws_iam_role.k8s-master.name}"
+}
+
+resource "aws_iam_role" "k8s-master" {
+  name = "k8s-master-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
 
 /* ************************************************************************* */
 /* k8s-slave */
@@ -340,13 +369,16 @@ resource "aws_instance" "k8s-slave" {
   subnet_id     = "${aws_subnet.private.id}"
   key_name      = "${aws_key_pair.provisioning.key_name}"
 
+  iam_instance_profile = "${aws_iam_instance_profile.k8s-slave.name}"
+
   vpc_security_group_ids = [
     "${aws_security_group.standard.id}"
   ]
 
   tags = {
-    name  = "k8s-slave"
-    index = "${count.index}"
+    name              = "k8s-slave"
+    index             = "${count.index}"
+    KubernetesCluster = "govuk-k8s"
   }
 
   root_block_device {
@@ -362,6 +394,32 @@ resource "aws_route53_record" "k8s-slave" {
   type    = "A"
   ttl     = 300
   records = ["${aws_instance.k8s-slave[count.index].private_ip}"]
+}
+
+resource "aws_iam_instance_profile" "k8s-slave" {
+  name = "k8s-slave-profile"
+  role = "${aws_iam_role.k8s-slave.name}"
+}
+
+resource "aws_iam_role" "k8s-slave" {
+  name = "k8s-slave-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
 }
 
 
@@ -436,6 +494,63 @@ resource "aws_security_group" "standard" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["${aws_vpc.cloud.cidr_block}"]
+  }
+}
+
+
+/* ************************************************************************* */
+/* k8s storage auto-provisioning */
+
+resource "aws_iam_role_policy_attachment" "k8s-master-ebs-policy" {
+  role       = "${aws_iam_role.k8s-master.name}"
+  policy_arn = "${aws_iam_policy.k8s-master-ebs-policy.arn}"
+}
+
+resource "aws_iam_policy" "k8s-master-ebs-policy" {
+  name   = "k8s-master-ebs-policy"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.k8s-master-ebs-policy.json}"
+}
+
+data "aws_iam_policy_document" "k8s-master-ebs-policy" {
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:AttachVolume",
+      "ec2:DetachVolume",
+      "ec2:DescribeVolumes",
+      "ec2:CreateVolume",
+      "ec2:DeleteVolume",
+      "ec2:CreateTags",
+      "ec2:DescribeSecurityGroups",
+    ]
+
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "k8s-slave-ebs-policy" {
+  role       = "${aws_iam_role.k8s-slave.name}"
+  policy_arn = "${aws_iam_policy.k8s-slave-ebs-policy.arn}"
+}
+
+resource "aws_iam_policy" "k8s-slave-ebs-policy" {
+  name   = "k8s-slave-ebs-policy"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.k8s-slave-ebs-policy.json}"
+}
+
+data "aws_iam_policy_document" "k8s-slave-ebs-policy" {
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:AttachVolume",
+      "ec2:DetachVolume",
+      "ec2:DescribeVolumes",
+      "ec2:DescribeSecurityGroups",
+    ]
+
+    resources = ["*"]
   }
 }
 
