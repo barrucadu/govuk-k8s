@@ -9,7 +9,11 @@ function build_host () {
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "nixos/${config}.nix" "${host}.govuk-k8s.test:/etc/nixos/configuration.nix"
   ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${host}.govuk-k8s.test" <<EOF
 sed -i "s/HOSTNAME_PLACEHOLDER/\$(curl http://169.254.169.254/latest/meta-data/hostname)/g" /etc/nixos/common.nix
-nixos-rebuild switch
+if ! nixos-rebuild switch; then
+   echo "trying again in 20 seconds in case it was just the usual culprit (etcd / kubernetes race condition)"
+   sleep 20
+   nixos-rebuild switch
+fi
 EOF
 }
 
