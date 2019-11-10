@@ -205,7 +205,7 @@ module "ci" {
   route53_zone_name = "${aws_route53_zone.internal.name}"
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
-  instance_root_size = 25
+  instance_root_size = 100
   instance_type      = "m5.xlarge"
 }
 
