@@ -49,8 +49,6 @@ provider "aws" {
 resource "aws_vpc" "cloud" {
   cidr_block = "10.0.0.0/16"
 
-  assign_generated_ipv6_cidr_block = true
-
   enable_dns_support   = true
   enable_dns_hostnames = true
 }
@@ -59,26 +57,15 @@ resource "aws_subnet" "public" {
   vpc_id     = "${aws_vpc.cloud.id}"
   cidr_block = "10.0.255.0/24"
 
-  ipv6_cidr_block = cidrsubnet(aws_vpc.cloud.ipv6_cidr_block, 8, 255)
-
-  map_public_ip_on_launch         = true
-  assign_ipv6_address_on_creation = true
+  map_public_ip_on_launch = true
 }
 
 resource "aws_subnet" "private" {
   vpc_id     = "${aws_vpc.cloud.id}"
   cidr_block = "10.0.0.0/24"
-
-  ipv6_cidr_block = cidrsubnet(aws_vpc.cloud.ipv6_cidr_block, 8, 0)
-
-  assign_ipv6_address_on_creation = true
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.cloud.id}"
-}
-
-resource "aws_egress_only_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.cloud.id}"
 }
 
@@ -101,11 +88,6 @@ resource "aws_route_table" "public" {
     gateway_id = "${aws_internet_gateway.gw.id}"
   }
 
-  route {
-    ipv6_cidr_block        = "::/0"
-    egress_only_gateway_id = "${aws_egress_only_internet_gateway.gw.id}"
-  }
-
   tags = {
     name = "public"
   }
@@ -117,11 +99,6 @@ resource "aws_route_table" "private" {
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = "${aws_nat_gateway.gw.id}"
-  }
-
-  route {
-    ipv6_cidr_block        = "::/0"
-    egress_only_gateway_id = "${aws_egress_only_internet_gateway.gw.id}"
   }
 
   tags = {
@@ -181,14 +158,6 @@ resource "aws_route53_record" "jumpbox-ipv4" {
   type    = "A"
   ttl     = 300
   records = ["${aws_instance.jumpbox.public_ip}"]
-}
-
-resource "aws_route53_record" "jumpbox-ipv6" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "jumpbox.${aws_route53_zone.external.name}"
-  type    = "AAAA"
-  ttl     = 300
-  records = "${aws_instance.jumpbox.ipv6_addresses}"
 }
 
 resource "aws_route53_record" "jumpbox" {
@@ -252,39 +221,6 @@ resource "aws_route53_record" "web-ipv4-subdomain-star" {
   alias {
     zone_id = "${aws_route53_record.web-ipv4.zone_id}"
     name    = "${aws_route53_record.web-ipv4.name}"
-    evaluate_target_health = true
-  }
-}
-
-resource "aws_route53_record" "web-ipv6" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "web.${aws_route53_zone.external.name}"
-  type    = "AAAA"
-  ttl     = 300
-  records = "${aws_instance.web.ipv6_addresses}"
-}
-
-resource "aws_route53_record" "web-ipv6-star" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "*.web.${aws_route53_zone.external.name}"
-  type    = "AAAA"
-
-  alias {
-    zone_id = "${aws_route53_record.web-ipv6.zone_id}"
-    name    = "${aws_route53_record.web-ipv6.name}"
-    evaluate_target_health = true
-  }
-}
-
-resource "aws_route53_record" "web-ipv6-subdomain-star" {
-  count   = length(var.web_subdomains)
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "*.${var.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
-  type    = "AAAA"
-
-  alias {
-    zone_id = "${aws_route53_record.web-ipv6.zone_id}"
-    name    = "${aws_route53_record.web-ipv6.name}"
     evaluate_target_health = true
   }
 }
@@ -435,8 +371,6 @@ resource "aws_security_group" "external-ssh-ingress" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
-    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -449,16 +383,12 @@ resource "aws_security_group" "external-web-ingress" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
-    ipv6_cidr_blocks = ["::/0"]
   }
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
-    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -478,16 +408,12 @@ resource "aws_security_group" "standard" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
-    ipv6_cidr_blocks = ["::/0"]
   }
   egress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
-    ipv6_cidr_blocks = ["::/0"]
   }
   egress {
     from_port   = 0

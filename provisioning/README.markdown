@@ -57,19 +57,19 @@ and must be kept in sync with the value in terraform.
 DNS
 ---
 
-The following A and AAAA records are created:
+The following DNS records are created:
 
-| Record             | Type    | Zone     | Target         |
-| ------------------ | ------- | -------- | -------------- |
-| `jumpbox`          | A, AAAA | external | `jumpbox`      |
-| `web`              | A, AAAA | external | `web`          |
-| `*.web`            | A, AAAA | external | `web`          |
-| `*.live.web`       | A, AAAA | external | `web`          |
-| `*.management.web` | A, AAAA | external | `web`          |
-| `jumpbox`          | A       | internal | `jumpbox`      |
-| `web`              | A       | internal | `web`          |
-| `k8s-master`       | A       | internal | `k8s-master`   |
-| `k8s-slave-$n`     | A       | internal | `k8s-slave-$n` |
+| Record             | Type | Zone     | Target         |
+| ------------------ | ---- | -------- | -------------- |
+| `jumpbox`          | A    | external | `jumpbox`      |
+| `web`              | A    | external | `web`          |
+| `*.web`            | A    | external | `web`          |
+| `*.live.web`       | A    | external | `web`          |
+| `*.management.web` | A    | external | `web`          |
+| `jumpbox`          | A    | internal | `jumpbox`      |
+| `web`              | A    | internal | `web`          |
+| `k8s-master`       | A    | internal | `k8s-master`   |
+| `k8s-slave-$n`     | A    | internal | `k8s-slave-$n` |
 
 To make the external domains work across the wider internet, you need
 to configure NS records wherever you host the DNS for that domain.
@@ -93,7 +93,6 @@ This script tears down everything except:
 
 - The VPC
 - The internet gateway
-- The IPv6 egress gateway
 - The Elastic IP used for NAT
 - The external DNS zone
 
