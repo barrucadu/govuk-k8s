@@ -19,13 +19,11 @@ EOF
 
 set -ex
 
-build_host k8s-master k8s-master
-
-secret=$(ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no k8s-master.govuk-k8s.test cat /var/lib/kubernetes/secrets/apitoken.secret)
 for i in $(seq 0 "$((SLAVES - 1))"); do
   build_host "k8s-slave-${i}" k8s-slave
 done
 
+build_host k8s-master k8s-master
 build_host ci ci
 build_host registry registry
 build_host web web
