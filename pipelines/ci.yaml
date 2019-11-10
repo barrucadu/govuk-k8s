@@ -1,0 +1,252 @@
+resources:
+- name: govuk-base-git
+  type: git
+  source:
+    uri: https://github.com/barrucadu/govuk-k8s.git
+    branch: ci
+- name: govuk-base-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/govuk-base
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: calculators-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/calculators.git
+    branch: deployed-to-production
+- name: calculators-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/calculators
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: calendars-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/calendars.git
+    branch: deployed-to-production
+- name: calendars-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/calendars
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: collections-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/collections.git
+    branch: deployed-to-production
+- name: collections-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/collections
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: finder-frontend-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/finder-frontend.git
+    branch: deployed-to-production
+- name: finder-frontend-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/finder-frontend
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: frontend-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/frontend.git
+    branch: deployed-to-production
+- name: frontend-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/frontend
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: government-frontend-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/government-frontend.git
+    branch: deployed-to-production
+- name: government-frontend-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/government-frontend
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: info-frontend-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/info-frontend.git
+    branch: deployed-to-production
+- name: info-frontend-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/info-frontend
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: manuals-frontend-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/manuals-frontend.git
+    branch: deployed-to-production
+- name: manuals-frontend-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/manuals-frontend
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: smart-answers-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/smart-answers.git
+    branch: deployed-to-production
+- name: smart-answers-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/smart-answers
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+- name: service-manual-frontend-git
+  type: git
+  source:
+    uri: https://github.com/alphagov/service-manual-frontend.git
+    branch: deployed-to-production
+- name: service-manual-frontend-image
+  type: docker-image
+  source:
+    repository: registry.govuk-k8s.test:5000/service-manual-frontend
+    insecure_registries: ["registry.govuk-k8s.test:5000"]
+
+jobs:
+- name: govuk-base
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - put: govuk-base-image
+      params:
+        build: .
+        dockerfile: govuk-base-git/docker/Dockerfile.govuk-base
+        tag_as_latest: true
+- name: calculators
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: calculators-git
+      trigger: true
+    - put: calculators-image
+      params:
+        build: calculators-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: calendars
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: calendars-git
+      trigger: true
+    - put: calendars-image
+      params:
+        build: calendars-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: collections
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: collections-git
+      trigger: true
+    - put: collections-image
+      params:
+        build: collections-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: finder-frontend
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: finder-frontend-git
+      trigger: true
+    - put: finder-frontend-image
+      params:
+        build: finder-frontend-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: frontend
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: frontend-git
+      trigger: true
+    - put: frontend-image
+      params:
+        build: frontend-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: government-frontend
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: government-frontend-git
+      trigger: true
+    - put: government-frontend-image
+      params:
+        build: government-frontend-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: info-frontend
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: info-frontend-git
+      trigger: true
+    - put: info-frontend-image
+      params:
+        build: info-frontend-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: manuals-frontend
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: manuals-frontend-git
+      trigger: true
+    - put: manuals-frontend-image
+      params:
+        build: manuals-frontend-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: smart-answers
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: smart-answers-git
+      trigger: true
+    - put: smart-answers-image
+      params:
+        build: smart-answers-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true
+- name: service-manual-frontend
+  serial: true
+  plan:
+    - get: govuk-base-git
+    - get: govuk-base-image
+      trigger: true
+    - get: service-manual-frontend-git
+      trigger: true
+    - put: service-manual-frontend-image
+      params:
+        build: service-manual-frontend-git
+        dockerfile: govuk-base-git/docker/Dockerfile.generic-app
+        tag_as_latest: true

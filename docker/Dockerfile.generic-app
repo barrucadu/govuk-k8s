@@ -1,8 +1,8 @@
 FROM registry.govuk-k8s.test:5000/govuk-base:latest
 
-COPY --chown=govuk . /finder-frontend
+COPY --chown=govuk . /app
 
-WORKDIR /finder-frontend
+WORKDIR /app
 
 RUN rbenv install -s && \
     gem install --conservative --no-document bundler -v $(grep -A1 "BUNDLED WITH" Gemfile.lock | tail -1) && \
