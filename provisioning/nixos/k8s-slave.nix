@@ -11,4 +11,6 @@
     # needed to provision EBS storage
     path = [ pkgs.e2fsprogs ];
   };
+
+  virtualisation.docker.extraOptions = "--insecure-registry=registry.govuk-k8s.test:5000";
 }

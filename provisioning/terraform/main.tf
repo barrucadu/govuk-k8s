@@ -235,6 +235,77 @@ resource "aws_route53_record" "web" {
 
 
 /* ************************************************************************* */
+/* ci */
+
+resource "aws_instance" "ci" {
+  ami           = "${var.ec2_ami}"
+  instance_type = "m5.xlarge"
+  subnet_id     = "${aws_subnet.public.id}"
+  key_name      = "${aws_key_pair.provisioning.key_name}"
+
+  vpc_security_group_ids = [
+    "${aws_security_group.external-web-ingress.id}",
+    "${aws_security_group.standard.id}"
+  ]
+
+  tags = {
+    name = "ci"
+  }
+
+  root_block_device {
+    volume_size = 25
+  }
+}
+
+resource "aws_route53_record" "ci-ipv4" {
+  zone_id = "${aws_route53_zone.external.zone_id}"
+  name    = "ci.${aws_route53_zone.external.name}"
+  type    = "A"
+  ttl     = 300
+  records = ["${aws_instance.ci.public_ip}"]
+}
+
+resource "aws_route53_record" "ci" {
+  zone_id = "${aws_route53_zone.internal.zone_id}"
+  name    = "ci.${aws_route53_zone.internal.name}"
+  type    = "A"
+  ttl     = 300
+  records = ["${aws_instance.ci.private_ip}"]
+}
+
+
+/* ************************************************************************* */
+/* registry */
+
+resource "aws_instance" "registry" {
+  ami           = "${var.ec2_ami}"
+  instance_type = "t3.medium"
+  subnet_id     = "${aws_subnet.private.id}"
+  key_name      = "${aws_key_pair.provisioning.key_name}"
+
+  vpc_security_group_ids = [
+    "${aws_security_group.standard.id}"
+  ]
+
+  tags = {
+    name = "registry"
+  }
+
+  root_block_device {
+    volume_size = 25
+  }
+}
+
+resource "aws_route53_record" "registry" {
+  zone_id = "${aws_route53_zone.internal.zone_id}"
+  name    = "registry.${aws_route53_zone.internal.name}"
+  type    = "A"
+  ttl     = 300
+  records = ["${aws_instance.registry.private_ip}"]
+}
+
+
+/* ************************************************************************* */
 /* k8s-master */
 
 resource "aws_instance" "k8s-master" {

@@ -22,5 +22,7 @@ for i in $(seq 0 "$((SLAVES - 1))"); do
   build_host "k8s-slave-${i}" k8s-slave
 done
 
+build_host ci ci
+build_host registry registry
 build_host web web
 build_host jumpbox jumpbox

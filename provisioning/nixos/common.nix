@@ -8,8 +8,13 @@
   options = {
     govuk-k8s = {
       externalDomainName = lib.mkOption { default = "govuk-k8s.barrucadu.co.uk"; };
+
       enableHTTPS = lib.mkOption { default = false; };
       forceHTTPS  = lib.mkOption { default = false; };
+
+      concourseGithubUser = lib.mkOption { default = "placeholder"; };
+      concourseGithubClientId = lib.mkOption { default = "placeholder"; };
+      concourseGithubClientSecret = lib.mkOption { default = "placeholder"; };
     };
   };
 
