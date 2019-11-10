@@ -28,9 +28,8 @@ variable "k8s_slaves" {
   default = 2
 }
 
-variable "web_subdomains" {
-  type    = list
-  default = ["live", "management"]
+locals {
+  web_subdomains = ["live"]
 }
 
 
@@ -213,9 +212,9 @@ resource "aws_route53_record" "web-ipv4-star" {
 }
 
 resource "aws_route53_record" "web-ipv4-subdomain-star" {
-  count   = length(var.web_subdomains)
+  count   = length(local.web_subdomains)
   zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "*.${var.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
+  name    = "*.${local.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
   type    = "A"
 
   alias {
