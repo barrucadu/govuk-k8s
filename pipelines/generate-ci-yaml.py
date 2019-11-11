@@ -59,6 +59,10 @@ frontend_apps = [
     "service-manual-frontend",
 ]
 
+api_apps = ["content-store", "search-api"]
+
+all_apps = frontend_apps + api_apps
+
 pipeline = {
     "resources": [
         git_resource(
@@ -87,10 +91,11 @@ pipeline = {
     "groups": [
         {"name": "CI", "jobs": ["govuk-base"]},
         {"name": "Frontend", "jobs": frontend_apps},
+        {"name": "API", "jobs": api_apps},
     ],
 }
 
-for app in frontend_apps:
+for app in all_apps:
     pipeline["resources"].append(git_resource(app))
     pipeline["resources"].append(image_resource(app))
     pipeline["jobs"].append(job(app))
