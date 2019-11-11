@@ -2,9 +2,11 @@
 
 set -e
 
+HERE="$(git rev-parse --show-toplevel)/provisioning"
+cd "$HERE"
+
 ./deploy-terraform.sh
 ./deploy-nixos.sh
 ./deploy-k8s.sh
 
-cd terraform
-./info.sh
+./terraform/info.sh

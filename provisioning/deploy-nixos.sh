@@ -2,6 +2,9 @@
 
 set -e
 
+HERE="$(git rev-parse --show-toplevel)/provisioning"
+cd "$HERE"
+
 pushd terraform
 HOST="$(terraform output public-ssh-ip)"
 SLAVES="$(terraform output k8s_slaves)"

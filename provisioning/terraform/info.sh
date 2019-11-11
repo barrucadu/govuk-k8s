@@ -2,10 +2,8 @@
 
 set -e
 
-if [[ ! -e main.tf ]]; then
-    echo "run me from the terraform directory"
-    exit 1
-fi
+HERE="$(git rev-parse --show-toplevel)/provisioning/terraform"
+cd "$HERE"
 
 SSH_IP="$(terraform output public-ssh-ip)"
 WEB_IP="$(terraform output public-web-ip)"

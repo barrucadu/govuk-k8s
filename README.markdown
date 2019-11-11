@@ -36,6 +36,5 @@ nano config
 ./generate-config.sh
 
 # Conjure infrastructure out of thin air
-cd provisioning
-./create.sh
+./provisioning/create.sh
 ```

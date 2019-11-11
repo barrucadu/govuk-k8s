@@ -2,6 +2,7 @@
 
 set -e
 
-pushd terraform
+HERE="$(git rev-parse --show-toplevel)/provisioning"
+cd "$HERE/terraform"
+
 terraform apply "$@"
-popd
