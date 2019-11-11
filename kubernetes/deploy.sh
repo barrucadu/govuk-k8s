@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 NAMESPACE="$1"
 JUMPBOX="$2"

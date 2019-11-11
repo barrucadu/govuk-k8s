@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 if [[ ! -e config ]]; then
     echo "$(pwd)/config file does not exist"
