@@ -1,36 +1,20 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: smart-answers
-spec:
-  selector:
-    run: smart-answers
-  ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-      nodePort: 31012
-  type: NodePort
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: smart-answers
+  name: manuals-frontend
 spec:
   selector:
     matchLabels:
-      run: smart-answers
+      run: manuals-frontend
   replicas: 2
   template:
     metadata:
       labels:
-        run: smart-answers
+        run: manuals-frontend
     spec:
       containers:
-        - name: smart-answers
-          image: registry.govuk-k8s.test:5000/smart-answers
+        - name: manuals-frontend
+          image: registry.govuk-k8s.test:5000/manuals-frontend
           env:
             - name: PLEK_SERVICE_SEARCH_URI
               valueFrom:
@@ -61,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: govuk
-                  key: K8S_HOSTNAMES-smart-answers
+                  key: K8S_HOSTNAMES-manuals-frontend
             - name: HOST
               value: 0.0.0.0
           ports:

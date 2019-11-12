@@ -1,36 +1,20 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: calculators
-spec:
-  selector:
-    run: calculators
-  ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-      nodePort: 31001
-  type: NodePort
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: calculators
+  name: service-manual-frontend
 spec:
   selector:
     matchLabels:
-      run: calculators
+      run: service-manual-frontend
   replicas: 2
   template:
     metadata:
       labels:
-        run: calculators
+        run: service-manual-frontend
     spec:
       containers:
-        - name: calculators
-          image: registry.govuk-k8s.test:5000/calculators
+        - name: service-manual-frontend
+          image: registry.govuk-k8s.test:5000/service-manual-frontend
           env:
             - name: PLEK_SERVICE_SEARCH_URI
               valueFrom:
@@ -61,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: govuk
-                  key: K8S_HOSTNAMES-calculators
+                  key: K8S_HOSTNAMES-service-manual-frontend
             - name: HOST
               value: 0.0.0.0
           ports:

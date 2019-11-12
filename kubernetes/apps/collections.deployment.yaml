@@ -1,36 +1,20 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: government-frontend
-spec:
-  selector:
-    run: government-frontend
-  ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-      nodePort: 31008
-  type: NodePort
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: government-frontend
+  name: collections
 spec:
   selector:
     matchLabels:
-      run: government-frontend
+      run: collections
   replicas: 2
   template:
     metadata:
       labels:
-        run: government-frontend
+        run: collections
     spec:
       containers:
-        - name: government-frontend
-          image: registry.govuk-k8s.test:5000/government-frontend
+        - name: collections
+          image: registry.govuk-k8s.test:5000/collections
           env:
             - name: PLEK_SERVICE_SEARCH_URI
               valueFrom:
@@ -61,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: govuk
-                  key: K8S_HOSTNAMES-government-frontend
+                  key: K8S_HOSTNAMES-collections
             - name: HOST
               value: 0.0.0.0
           ports:

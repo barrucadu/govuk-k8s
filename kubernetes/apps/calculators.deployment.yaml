@@ -1,36 +1,20 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: calendars
-spec:
-  selector:
-    run: calendars
-  ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-      nodePort: 31002
-  type: NodePort
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: calendars
+  name: calculators
 spec:
   selector:
     matchLabels:
-      run: calendars
+      run: calculators
   replicas: 2
   template:
     metadata:
       labels:
-        run: calendars
+        run: calculators
     spec:
       containers:
-        - name: calendars
-          image: registry.govuk-k8s.test:5000/calendars
+        - name: calculators
+          image: registry.govuk-k8s.test:5000/calculators
           env:
             - name: PLEK_SERVICE_SEARCH_URI
               valueFrom:
@@ -61,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: govuk
-                  key: K8S_HOSTNAMES-calendars
+                  key: K8S_HOSTNAMES-calculators
             - name: HOST
               value: 0.0.0.0
           ports:
