@@ -14,12 +14,14 @@ hope I'll be able to heavily borrow from.
 Tools used:
 
 - [Kubernetes][], for container orchestration.
+- [Concourse][], for continuous integration.
 - [Terraform][], to create the infrastructure underpinning k8s.
 - [NixOS][], to configure the infrastructure underpinning k8s.
 
 [GOV.UK]: https://www.gov.uk
 [govuk-docker]: https://github.com/alphagov/govuk-docker
 [Kubernetes]: https://kubernetes.io/
+[Concourse]: https://concourse-ci.org/
 [Terraform]: https://www.terraform.io/
 [NixOS]: https://nixos.org/
 
@@ -37,4 +39,12 @@ nano config
 
 # Conjure infrastructure out of thin air
 ./provisioning/create.sh
+```
+
+After DNS has resolved and `ci.<external domain>` works you can deploy
+the Concourse configuration and trigger a build of all the apps:
+
+```bash
+# Configure Concourse and trigger a build of all apps
+./ci/create.sh
 ```
