@@ -75,7 +75,7 @@ api_apps = ["content-store", "search-api"]
 all_apps = frontend_apps + api_apps
 
 extra_job_kwargs = {
-    "content_store": {"rake_assets_precompile": False},
+    "content-store": {"rake_assets_precompile": False},
     "search-api": {
         "rake_assets_precompile": False,
         "rake_yarn_install": False,
