@@ -26,7 +26,17 @@ def image_resource(name):
     }
 
 
-def job(name):
+def job(
+    name, rake_assets_precompile=True, rake_yarn_install=True, rails_initializer=True
+):
+    build_args = {}
+    if rake_assets_precompile:
+        build_args["RAKE_ASSETS_PRECOMPILE"] = "true"
+    if rake_yarn_install:
+        build_args["RAKE_YARN_INSTALL"] = "true"
+    if rails_initializer:
+        build_args["RAILS_INITIALIZER"] = "true"
+
     return {
         "name": name,
         "serial": True,
@@ -38,6 +48,7 @@ def job(name):
                 "put": f"{name}-image",
                 "params": {
                     "build": f"{name}-git",
+                    "build_args": build_args,
                     "dockerfile": "govuk-base-git/ci/docker/Dockerfile.generic-app",
                     "tag_as_latest": True,
                 },
@@ -62,6 +73,15 @@ frontend_apps = [
 api_apps = ["content-store", "search-api"]
 
 all_apps = frontend_apps + api_apps
+
+extra_job_kwargs = {
+    "content_store": {"rake_assets_precompile": False},
+    "search-api": {
+        "rake_assets_precompile": False,
+        "rake_yarn_install": False,
+        "rails_initializer": False,
+    },
+}
 
 pipeline = {
     "resources": [
@@ -98,6 +118,6 @@ pipeline = {
 for app in all_apps:
     pipeline["resources"].append(git_resource(app))
     pipeline["resources"].append(image_resource(app))
-    pipeline["jobs"].append(job(app))
+    pipeline["jobs"].append(job(app, **extra_job_kwargs.get(app, {})))
 
 print(yaml.dump(pipeline, Dumper=yaml.Dumper))
