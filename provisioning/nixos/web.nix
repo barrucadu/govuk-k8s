@@ -136,9 +136,6 @@ in
       "manuals-frontend.live.${domain}"        = govuk_virtualhost (live_offset + ports.manuals-frontend);
       "smart-answers.live.${domain}"           = govuk_virtualhost (live_offset + ports.smart-answers);
       "service-manual-frontend.live.${domain}" = govuk_virtualhost (live_offset + ports.service-manual-frontend);
-
-      # management: administrationy things
-      "concourse.management.${domain}"         = govuk_virtualhost 32000;
     };
   };
 }
