@@ -38,7 +38,7 @@ def job(name):
                 "put": f"{name}-image",
                 "params": {
                     "build": f"{name}-git",
-                    "dockerfile": "govuk-base-git/docker/Dockerfile.generic-app",
+                    "dockerfile": "govuk-base-git/ci/docker/Dockerfile.generic-app",
                     "tag_as_latest": True,
                 },
             },
@@ -81,7 +81,7 @@ pipeline = {
                     "put": "govuk-base-image",
                     "params": {
                         "build": ".",
-                        "dockerfile": "govuk-base-git/docker/Dockerfile.govuk-base",
+                        "dockerfile": "govuk-base-git/ci/docker/Dockerfile.govuk-base",
                         "tag_as_latest": True,
                     },
                 },
