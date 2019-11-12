@@ -311,7 +311,8 @@ module "k8s-slave" {
   route53_zone_name = "${aws_route53_zone.internal.name}"
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
-  instance_type = "m5.xlarge"
+  instance_root_size = 50
+  instance_type      = "m5.xlarge"
 
   extra_tags = {
     KubernetesCluster = "govuk-k8s"
