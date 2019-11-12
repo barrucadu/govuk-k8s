@@ -86,7 +86,9 @@ extra_job_kwargs = {
 pipeline = {
     "resources": [
         git_resource(
-            "govuk-base", repo="https://github.com/barrucadu/govuk-k8s.git", branch="ci"
+            "govuk-base",
+            repo="https://github.com/barrucadu/govuk-k8s.git",
+            branch="master",
         ),
         image_resource("govuk-base"),
     ],

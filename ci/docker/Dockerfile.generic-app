@@ -14,6 +14,6 @@ RUN rbenv install -s && \
 
 RUN test -z "$RAKE_ASSETS_PRECOMPILE" || bundle exec rake assets:precompile && :
 RUN test -z "$RAKE_YARN_INSTALL"      || bundle exec rake yarn:install && :
-RUN test -z "$RAILS_INITIALIZER"      || echo ENV["K8S_HOSTNAMES"].split(",").each { |host| Rails.application.config.hosts << host }' > config/initializers/k8s.rb && :
+RUN test -z "$RAILS_INITIALIZER"      || echo 'ENV["K8S_HOSTNAMES"].split(",").each { |host| Rails.application.config.hosts << host }' > config/initializers/k8s.rb && :
 
 CMD bin/rails s --restart
