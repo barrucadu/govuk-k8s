@@ -22,7 +22,7 @@
     ec2.hvm = true;
 
     # this is replaced with the EC2 hostname
-    networking.hostName = "HOSTNAME_PLACEHOLDER";
+    networking.hostName = import /etc/nixos/generated-hostname.nix;
 
     # we have security groups
     networking.firewall.enable = false;
