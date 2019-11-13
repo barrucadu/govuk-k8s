@@ -1,4 +1,5 @@
-FROM registry.govuk-k8s.test:5000/govuk-base:latest
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 ARG RAILS_INITIALIZER
 ARG RAKE_ASSETS_PRECOMPILE
@@ -8,8 +9,7 @@ COPY --chown=govuk . /app
 
 WORKDIR /app
 
-RUN rbenv install -s && \
-    gem install --conservative --no-document bundler -v $(grep -A1 "BUNDLED WITH" Gemfile.lock | tail -1) && \
+RUN gem install --conservative --no-document bundler -v $(grep -A1 "BUNDLED WITH" Gemfile.lock | tail -1) && \
     bundle
 
 RUN test -z "$RAKE_ASSETS_PRECOMPILE" || bundle exec rake assets:precompile && :
