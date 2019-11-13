@@ -64,6 +64,21 @@ to configure NS records wherever you host the DNS for that domain.
 `create.sh` and `terraform/info.sh` scripts can tell you those.
 
 
+IP Ranges
+---------
+
+There are a few different needs for IP ranges, so to keep everything
+clear and separate, here they all are:
+
+| CIDR          | Scope          | Purpose                               |
+| ------------- | -------------- | ------------------------------------- |
+| `10.0.0.0/16` | VPC            | addressable AWS entities              |
+| `10.0.0.0/24` | Public subnet  | things accessible to the internet     |
+| `10.0.1.0/24` | Private subnet | things not accessible to the internet |
+| `10.1.0.0/16` | Kubernetes     | nodes and pods in the cluster         |
+| `10.2.0.0/16` | Kubernetes     | services in the cluster               |
+
+
 £££
 ---
 
