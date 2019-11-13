@@ -1,9 +1,9 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
 
-ARG RAILS_INITIALIZER
 ARG RAKE_ASSETS_PRECOMPILE
 ARG RAKE_YARN_INSTALL
+ARG RAILS6_INITIALIZER
 
 COPY --chown=govuk . /app
 
@@ -14,6 +14,6 @@ RUN gem install --conservative --no-document bundler -v $(grep -A1 "BUNDLED WITH
 
 RUN test -z "$RAKE_ASSETS_PRECOMPILE" || bundle exec rake assets:precompile && :
 RUN test -z "$RAKE_YARN_INSTALL"      || bundle exec rake yarn:install && :
-RUN test -z "$RAILS_INITIALIZER"      || echo 'ENV["K8S_HOSTNAMES"].split(",").each { |host| Rails.application.config.hosts << host }' > config/initializers/k8s.rb && :
+RUN test -z "$RAILS6_INITIALIZER"     || echo 'ENV["K8S_HOSTNAMES"].split(",").each { |host| Rails.application.config.hosts << host }' > config/initializers/k8s.rb && :
 
 CMD bin/rails s --restart

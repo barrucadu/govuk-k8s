@@ -48,15 +48,15 @@ def build_app(
     base_image="ruby-2-6-5",
     rake_assets_precompile=True,
     rake_yarn_install=True,
-    rails_initializer=True,
+    rails6_initializer=False,
 ):
     build_args = {"BASE_IMAGE": f"registry.govuk-k8s.test:5000/{base_image}:latest"}
     if rake_assets_precompile:
         build_args["RAKE_ASSETS_PRECOMPILE"] = "true"
     if rake_yarn_install:
         build_args["RAKE_YARN_INSTALL"] = "true"
-    if rails_initializer:
-        build_args["RAILS_INITIALIZER"] = "true"
+    if rails6_initializer:
+        build_args["RAILS6_INITIALIZER"] = "true"
 
     return {
         "name": name,
@@ -97,11 +97,8 @@ all_apps = frontend_apps + api_apps
 
 extra_job_kwargs = {
     "content-store": {"rake_assets_precompile": False},
-    "search-api": {
-        "rake_assets_precompile": False,
-        "rake_yarn_install": False,
-        "rails_initializer": False,
-    },
+    "finder-frontend": {"rails6_initializer": True},
+    "search-api": {"rake_assets_precompile": False, "rake_yarn_install": False},
 }
 
 pipeline = {
