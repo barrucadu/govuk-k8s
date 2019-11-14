@@ -50,12 +50,6 @@ in
 {
   imports = [ ./common.nix ];
 
-  virtualisation.docker = {
-    autoPrune.enable = true;
-    enable = true;
-    extraOptions = "--insecure-registry=registry.govuk-k8s.test:5000";
-  };
-
   systemd.services.concourseci = {
     enable   = true;
     wantedBy = [ "multi-user.target" ];
@@ -98,4 +92,6 @@ in
     isSystemUser = true;
     extraGroups = [ "docker" ];
   };
+
+  virtualization.docker.enable = true;
 }
