@@ -1,14 +1,10 @@
-variable "aws_region" {
-  type = string
-}
-
-variable "aws_profile" {
-  type = string
-}
-
-variable "external_domain_name" {
-  type = string
-}
+# These are filled in by the generated terraform.tfvars
+variable "aws_region"           { type = string }
+variable "aws_profile"          { type = string }
+variable "ec2_ami"              { type = string }
+variable "external_domain_name" { type = string }
+variable "public_key_file"      { type = string }
+variable "k8s_slaves"           { type = number }
 
 
 /* ************************************************************************* */
