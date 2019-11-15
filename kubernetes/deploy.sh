@@ -20,6 +20,7 @@ source ../config
 pushd "$NAMESPACE"
 
 cp secrets.yaml.template secrets.yaml
+sed -i "s/TPL_ENABLE_HTTPS/${ENABLE_HTTPS}/" secrets.yaml
 sed -i "s/TPL_EXTERNAL_DOMAIN_NAME/${EXTERNAL_DOMAIN_NAME}/" secrets.yaml
 
 # generate a fresh SECRET_KEY_BASE every time

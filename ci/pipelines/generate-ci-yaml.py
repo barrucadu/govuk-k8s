@@ -110,15 +110,31 @@ pipeline = {
         ),
         image_resource("govuk-base"),
         image_resource("ruby-2-6-5"),
+        image_resource("fake-router"),
     ],
     "jobs": [
         build_base_image("govuk-base", base_image=None),
         build_base_image("ruby-2-6-5"),
+        {
+            "name": "fake-router",
+            "serial": True,
+            "plan": [
+                {"get": "govuk-base-git"},
+                {
+                    "put": f"fake-router-image",
+                    "params": {
+                        "build": "govuk-base-git/util/fake-router",
+                        "tag_as_latest": True,
+                    },
+                },
+            ],
+        },
     ],
     "groups": [
         {"name": "CI", "jobs": ["govuk-base", "ruby-2-6-5"]},
         {"name": "Frontend", "jobs": frontend_apps},
         {"name": "API", "jobs": api_apps},
+        {"name": "Miscellaneous", "jobs": ["fake-router"]},
     ],
 }
 

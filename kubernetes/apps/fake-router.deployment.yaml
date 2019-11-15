@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-router
+spec:
+  selector:
+    matchLabels:
+      run: fake-router
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        run: fake-router
+    spec:
+      containers:
+        - name: fake-router
+          image: registry.govuk-k8s.test:5000/fake-router
+          env:
+            - name: PLEK_SERVICE_CONTENT_STORE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: govuk
+                  key: PLEK_SERVICE_CONTENT_STORE_URI
+            - name: FAKE_ROUTER_HTTPS
+              valueFrom:
+                secretKeyRef:
+                  name: govuk
+                  key: FAKE_ROUTER_HTTPS
+            - name: FAKE_ROUTER_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: govuk
+                  key: FAKE_ROUTER_DOMAIN
+          ports:
+            - containerPort: 3000
+              protocol: TCP
