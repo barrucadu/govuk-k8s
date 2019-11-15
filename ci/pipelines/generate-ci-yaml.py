@@ -26,23 +26,44 @@ def image_resource(name):
     }
 
 
-def job(
-    name, rake_assets_precompile=True, rake_yarn_install=True, rails_initializer=True
+def build_base_image(name, base_image="govuk-base"):
+    plan = [{"get": "govuk-base-git"}]
+    if base_image:
+        plan.append({"get": f"{base_image}-image", "trigger": True})
+    plan.append(
+        {
+            "put": f"{name}-image",
+            "params": {
+                "build": ".",
+                "dockerfile": f"govuk-base-git/ci/docker/Dockerfile.{name}",
+                "tag_as_latest": True,
+            },
+        }
+    )
+    return {"name": name, "serial": True, "plan": plan}
+
+
+def build_app(
+    name,
+    base_image="ruby-2-6-5",
+    rake_assets_precompile=True,
+    rake_yarn_install=True,
+    rails6_initializer=False,
 ):
-    build_args = {}
+    build_args = {"BASE_IMAGE": f"registry.govuk-k8s.test:5000/{base_image}:latest"}
     if rake_assets_precompile:
         build_args["RAKE_ASSETS_PRECOMPILE"] = "true"
     if rake_yarn_install:
         build_args["RAKE_YARN_INSTALL"] = "true"
-    if rails_initializer:
-        build_args["RAILS_INITIALIZER"] = "true"
+    if rails6_initializer:
+        build_args["RAILS6_INITIALIZER"] = "true"
 
     return {
         "name": name,
         "serial": True,
         "plan": [
             {"get": "govuk-base-git"},
-            {"get": "govuk-base-image", "trigger": True},
+            {"get": f"{base_image}-image", "trigger": True},
             {"get": f"{name}-git", "trigger": True},
             {
                 "put": f"{name}-image",
@@ -76,11 +97,8 @@ all_apps = frontend_apps + api_apps
 
 extra_job_kwargs = {
     "content-store": {"rake_assets_precompile": False},
-    "search-api": {
-        "rake_assets_precompile": False,
-        "rake_yarn_install": False,
-        "rails_initializer": False,
-    },
+    "finder-frontend": {"rails6_initializer": True},
+    "search-api": {"rake_assets_precompile": False, "rake_yarn_install": False},
 }
 
 pipeline = {
@@ -91,27 +109,14 @@ pipeline = {
             branch="master",
         ),
         image_resource("govuk-base"),
+        image_resource("ruby-2-6-5"),
     ],
     "jobs": [
-        # different enough to job() to not be worth function-ising.
-        {
-            "name": "govuk-base",
-            "serial": True,
-            "plan": [
-                {"get": "govuk-base-git"},
-                {
-                    "put": "govuk-base-image",
-                    "params": {
-                        "build": ".",
-                        "dockerfile": "govuk-base-git/ci/docker/Dockerfile.govuk-base",
-                        "tag_as_latest": True,
-                    },
-                },
-            ],
-        }
+        build_base_image("govuk-base", base_image=None),
+        build_base_image("ruby-2-6-5"),
     ],
     "groups": [
-        {"name": "CI", "jobs": ["govuk-base"]},
+        {"name": "CI", "jobs": ["govuk-base", "ruby-2-6-5"]},
         {"name": "Frontend", "jobs": frontend_apps},
         {"name": "API", "jobs": api_apps},
     ],
@@ -120,6 +125,6 @@ pipeline = {
 for app in all_apps:
     pipeline["resources"].append(git_resource(app))
     pipeline["resources"].append(image_resource(app))
-    pipeline["jobs"].append(job(app, **extra_job_kwargs.get(app, {})))
+    pipeline["jobs"].append(build_app(app, **extra_job_kwargs.get(app, {})))
 
 print(yaml.dump(pipeline, Dumper=yaml.Dumper))

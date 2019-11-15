@@ -1,0 +1,3 @@
+FROM registry.govuk-k8s.test:5000/govuk-base:latest
+
+RUN rbenv install 2.6.5
