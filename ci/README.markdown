@@ -10,7 +10,7 @@ Scripts:
 
 - `./create.sh` - run `deploy-ci.sh` and `build-all-apps.sh` scripts
 - `./deploy-ci.sh` - deploy pipelines to Concourse
-- `./build-all-apps.sh` - trigger a build all apps
+- `./build-all-apps.sh` - trigger a build of all apps
 
 
 Pipelines

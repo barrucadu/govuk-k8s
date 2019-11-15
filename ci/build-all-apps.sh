@@ -10,3 +10,4 @@ if [[ -z "$FLY_LOGGED_IN" ]]; then
 fi
 
 fly trigger-job -t govuk-k8s -j ci/govuk-base
+fly trigger-job -t govuk-k8s -j ci/fake-router
