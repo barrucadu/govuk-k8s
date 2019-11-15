@@ -1,12 +1,6 @@
 { config, pkgs, ... }:
 
 let
-  nginx_with_brotli = pkgs.nginx.override {
-    modules = [
-      pkgs.nginxModules.brotli
-    ];
-  };
-
   cfg = config.govuk-k8s;
 
   domain = "ci.${cfg.externalDomainName}";
@@ -64,18 +58,11 @@ in
 
   services.nginx = {
     enable = true;
-    package = nginx_with_brotli;
 
     recommendedGzipSettings  = true;
     recommendedOptimisation  = true;
     recommendedProxySettings = true;
     recommendedTlsSettings   = true;
-
-    commonHttpConfig = ''
-      brotli on;
-      brotli_comp_level 11;
-      brotli_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    '';
 
     virtualHosts."${domain}" = {
       enableACME = cfg.enableHTTPS;

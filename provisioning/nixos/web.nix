@@ -1,12 +1,6 @@
 { config, pkgs, ... }:
 
 let
-  nginx_with_brotli = pkgs.nginx.override {
-    modules = [
-      pkgs.nginxModules.brotli
-    ];
-  };
-
   govuk_virtualhost = port: {
     enableACME = config.govuk-k8s.enableHTTPS;
     forceSSL   = config.govuk-k8s.enableHTTPS && config.govuk-k8s.forceHTTPS;
@@ -66,7 +60,6 @@ in
 
   services.nginx = {
     enable = true;
-    package = nginx_with_brotli;
 
     recommendedGzipSettings  = true;
     recommendedOptimisation  = true;
@@ -75,10 +68,6 @@ in
 
     commonHttpConfig = ''
       server_names_hash_bucket_size 128;
-
-      brotli on;
-      brotli_comp_level 11;
-      brotli_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
     '';
 
     virtualHosts = {
