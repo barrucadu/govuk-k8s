@@ -80,5 +80,5 @@ in
     extraGroups = [ "docker" ];
   };
 
-  virtualization.docker.enable = true;
+  virtualisation.docker.enable = true;
 }
