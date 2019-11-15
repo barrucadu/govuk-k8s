@@ -91,9 +91,10 @@ stringData:
 See `live/secrets.yaml.template` and `govuk/secrets.yaml.template` to
 see the concrete values for the `"..."` placeholders.
 
-There are two template variables expanded by `deploy.sh` to produce
+There are some template variables expanded by `deploy.sh` to produce
 the final `secrets.yaml`:
 
+- `TPL_ENABLE_HTTPS`: set to the `ENABLE_HTTPS` in `../config`
 - `TPL_EXTERNAL_DOMAIN_NAME`: set to the `EXTERNAL_DOMAIN_NAME` in `../config`
 - `TPL_UUID`: set to a random uuid, with each `TPL_UUID` different
 
