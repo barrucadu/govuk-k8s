@@ -20,11 +20,11 @@ source ../config
 pushd "$NAMESPACE"
 
 cp secrets.yaml.template secrets.yaml
-sed -i "s/EXTERNAL_DOMAIN_NAME/${EXTERNAL_DOMAIN_NAME}/" secrets.yaml
+sed -i "s/TPL_EXTERNAL_DOMAIN_NAME/${EXTERNAL_DOMAIN_NAME}/" secrets.yaml
 
 # generate a fresh SECRET_KEY_BASE every time
-while grep -q GENERATED_SECRET_KEY_BASE secrets.yaml; do
-  sed -i -e "/GENERATED_SECRET_KEY_BASE/{s//$(uuidgen)/;:a" -e '$!N;$!ba' -e '}' secrets.yaml
+while grep -q TPL_UUID secrets.yaml; do
+  sed -i -e "/TPL_UUID/{s//$(uuidgen)/;:a" -e '$!N;$!ba' -e '}' secrets.yaml
 done
 
 for service in *.service.yaml; do
