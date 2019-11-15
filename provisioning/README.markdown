@@ -61,7 +61,7 @@ With these DNS records:
 
 To make the external domains work across the wider internet, you need
 to configure NS records wherever you host the DNS for that domain.
-`create.sh` and `terraform/info.sh` scripts can tell you those.
+`create.sh` and `../util/infra-info.sh` scripts can tell you those.
 
 
 IP Ranges

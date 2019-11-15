@@ -9,4 +9,4 @@ cd "$HERE"
 ./deploy-nixos.sh
 ./deploy-k8s.sh
 
-./terraform/info.sh
+../util/infra-info.sh

@@ -2,8 +2,13 @@
 
 set -e
 
-HERE="$(git rev-parse --show-toplevel)/provisioning/terraform"
-cd "$HERE"
+TERRAFORM="$(git rev-parse --show-toplevel)/provisioning/terraform"
+cd "$TERRAFORM"
+
+if [[ ! -e terraform.tfstate ]]; then
+    echo "Infrastructure has not been provisioned."
+    exit 1
+fi
 
 SSH_IP="$(terraform output public-ssh-ip)"
 WEB_IP="$(terraform output public-web-ip)"
