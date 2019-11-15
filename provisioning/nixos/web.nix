@@ -115,6 +115,7 @@ in
       "release.${domain}"                      = govuk_virtualhost ports.release;
 
       # live: only frontend apps which can be run against live APIs
+      "www-origin.live.${domain}"              = govuk_virtualhost (live_offset + ports.www-origin);
       "calculators.live.${domain}"             = govuk_virtualhost (live_offset + ports.calculators);
       "calendars.live.${domain}"               = govuk_virtualhost (live_offset + ports.calendars);
       "collections.live.${domain}"             = govuk_virtualhost (live_offset + ports.collections);
