@@ -16,16 +16,16 @@ spec:
         - name: finder-frontend
           image: registry.govuk-k8s.test:5000/finder-frontend
           env:
-            - name: PLEK_SERVICE_SEARCH_URI
+            - name: GOVUK_APP_DOMAIN
               valueFrom:
                 secretKeyRef:
                   name: govuk
-                  key: PLEK_SERVICE_SEARCH_URI
-            - name: PLEK_SERVICE_WHITEHALL_ADMIN_URI
+                  key: GOVUK_APP_DOMAIN
+            - name: GOVUK_ASSET_ROOT
               valueFrom:
                 secretKeyRef:
                   name: govuk
-                  key: PLEK_SERVICE_WHITEHALL_ADMIN_URI
+                  key: GOVUK_ASSET_ROOT
             - name: GOVUK_WEBSITE_ROOT
               valueFrom:
                 secretKeyRef:
@@ -36,18 +36,37 @@ spec:
                 secretKeyRef:
                   name: govuk
                   key: PLEK_SERVICE_CONTENT_STORE_URI
+            - name: PLEK_SERVICE_SEARCH_URI
+              valueFrom:
+                secretKeyRef:
+                  name: govuk
+                  key: PLEK_SERVICE_SEARCH_URI
             - name: PLEK_SERVICE_STATIC_URI
               valueFrom:
                 secretKeyRef:
                   name: govuk
                   key: PLEK_SERVICE_STATIC_URI
+            - name: PLEK_SERVICE_WHITEHALL_ADMIN_URI
+              valueFrom:
+                secretKeyRef:
+                  name: govuk
+                  key: PLEK_SERVICE_WHITEHALL_ADMIN_URI
             - name: K8S_HOSTNAMES
               valueFrom:
                 secretKeyRef:
                   name: govuk
                   key: K8S_HOSTNAMES-finder-frontend
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: govuk
+                  key: SECRET_KEY_BASE-finder-frontend
             - name: HOST
               value: 0.0.0.0
+            - name: RAILS_ENV
+              value: production
+            - name: RAILS_SERVE_STATIC_FILES
+              value: "true"
           ports:
             - containerPort: 3000
               protocol: TCP

@@ -18,8 +18,15 @@ cd "$HERE"
 source ../config
 
 pushd "$NAMESPACE"
+
 cp secrets.yaml.template secrets.yaml
 sed -i "s/EXTERNAL_DOMAIN_NAME/${EXTERNAL_DOMAIN_NAME}/" secrets.yaml
+
+# generate a fresh SECRET_KEY_BASE every time
+while grep -q GENERATED_SECRET_KEY_BASE secrets.yaml; do
+  sed -i -e "/GENERATED_SECRET_KEY_BASE/{s//$(uuidgen)/;:a" -e '$!N;$!ba' -e '}' secrets.yaml
+done
+
 for service in *.service.yaml; do
   app="${service//.service.yaml/}"
   cp "../apps/${app}.deployment.yaml" .
@@ -33,7 +40,8 @@ scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -r "$NAMESPACE" 
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no k8s-master.govuk-k8s.test <<INNER
 set -ex
 source .bashrc
-for file in ${NAMESPACE}/*.yaml; do
+cd "$NAMESPACE"
+for file in *.yaml; do
   kubectl --namespace "$NAMESPACE" apply -f \\\$file
 done
 INNER
