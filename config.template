@@ -5,6 +5,9 @@
 # This configuration file is a shell script which is sourced and used
 # to generate terraform.tfvars and vars.nix.
 
+# Place where kubectl config file will be stored
+KUBECONFIG="${HOME}/.kube/config-govuk-k8s"
+
 ## Infrastructure
 
 # AWS region
@@ -22,8 +25,8 @@ EXTERNAL_DOMAIN_NAME=""
 # Path to SSH public key file for root
 PUBLIC_KEY_FILE=""
 
-# Number of k8s slave nodes
-K8S_SLAVES="2"
+# Number of k8s worker nodes
+WORKER_COUNT="2"
 
 ## Web
 

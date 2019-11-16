@@ -33,21 +33,5 @@
     # collect nix store garbage and optimise daily
     nix.gc.automatic = true;
     nix.optimise.automatic = true;
-
-    # k8s config shared between master and slaves
-    services.kubernetes = {
-      apiserver.allowPrivileged = true;
-      apiserver.extraOpts = "--cloud-provider=aws";
-      apiserver.serviceClusterIpRange = "10.2.0.0/16";
-      clusterCidr = "10.1.0.0/16";
-      controllerManager.extraOpts = "--cloud-provider=aws";
-      masterAddress = "k8s-master.govuk-k8s.test";
-    };
-
-    # docker config shared between ci and slaves
-    virtualisation.docker = {
-      autoPrune.enable = true;
-      extraOptions = "--insecure-registry=registry.govuk-k8s.test:5000";
-    };
   };
 }
