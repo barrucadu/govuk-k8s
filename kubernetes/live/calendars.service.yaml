@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: calendars
+  namespace: live
 spec:
   selector:
     run: calendars
@@ -9,5 +10,24 @@ spec:
     - protocol: TCP
       port: 3000
       targetPort: 3000
-      nodePort: 31002
   type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: calendars
+  namespace: live
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/tags: App=calendars,Namespace=live
+    alb.ingress.kubernetes.io/healthcheck-path: /bank-holidays
+spec:
+  rules:
+    - host: calendars.live.in-cluster.govuk-k8s.test
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: calendars
+              servicePort: 3000

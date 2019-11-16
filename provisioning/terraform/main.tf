@@ -4,10 +4,17 @@ variable "aws_profile"          { type = string }
 variable "ec2_ami"              { type = string }
 variable "external_domain_name" { type = string }
 variable "public_key_file"      { type = string }
-variable "k8s_slaves"           { type = number }
+variable "worker_count"         { type = number }
 
 locals {
-  web_subdomains = ["live"]
+  cluster_name   = "govuk-k8s"
+  web_subdomains = ["govuk", "live"]
+
+  instance_type_jumpbox  = "t3.micro"
+  instance_type_web      = "t3.small"
+  instance_type_registry = "t3.small"
+  instance_type_ci       = "m5.large"
+  instance_type_worker   = "m5.large"
 }
 
 
@@ -28,69 +35,80 @@ resource "aws_vpc" "cloud" {
 
   enable_dns_support   = true
   enable_dns_hostnames = true
-}
 
-resource "aws_subnet" "public" {
-  vpc_id     = "${aws_vpc.cloud.id}"
-  cidr_block = "10.0.0.0/24"
-
-  map_public_ip_on_launch = true
-}
-
-resource "aws_subnet" "private" {
-  vpc_id     = "${aws_vpc.cloud.id}"
-  cidr_block = "10.0.1.0/24"
+  tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+  }
 }
 
 resource "aws_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.cloud.id}"
 }
 
-resource "aws_eip" "nat" {
+resource "aws_eip" "a" {
   vpc        = true
   depends_on = ["aws_internet_gateway.gw"]
 }
 
-resource "aws_nat_gateway" "gw" {
-  allocation_id = "${aws_eip.nat.id}"
-  subnet_id     = "${aws_subnet.public.id}"
-  depends_on    = ["aws_internet_gateway.gw"]
+resource "aws_eip" "b" {
+  vpc        = true
+  depends_on = ["aws_internet_gateway.gw"]
 }
 
-resource "aws_route_table" "public" {
+resource "aws_eip" "c" {
+  vpc        = true
+  depends_on = ["aws_internet_gateway.gw"]
+}
+
+module "subnet_a" {
+  source = "./public_private_subnet"
+
   vpc_id = "${aws_vpc.cloud.id}"
+  eip_id = "${aws_eip.a.id}"
+  gw_id  = "${aws_internet_gateway.gw.id}"
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.gw.id}"
-  }
+  public_cidr_block  = "10.0.0.0/24"
+  private_cidr_block = "10.0.1.0/24"
+  availability_zone  = "eu-west-2a"
 
-  tags = {
-    name = "public"
+  private_tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
-resource "aws_route_table" "private" {
+module "subnet_b" {
+  source = "./public_private_subnet"
+
   vpc_id = "${aws_vpc.cloud.id}"
+  eip_id = "${aws_eip.b.id}"
+  gw_id  = "${aws_internet_gateway.gw.id}"
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = "${aws_nat_gateway.gw.id}"
-  }
+  public_cidr_block  = "10.0.2.0/24"
+  private_cidr_block = "10.0.3.0/24"
+  availability_zone  = "eu-west-2b"
 
-  tags = {
-    name = "private"
+  private_tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
-resource "aws_route_table_association" "public" {
-  subnet_id      = "${aws_subnet.public.id}"
-  route_table_id = "${aws_route_table.public.id}"
-}
+module "subnet_c" {
+  source = "./public_private_subnet"
 
-resource "aws_route_table_association" "private" {
-  subnet_id      = "${aws_subnet.private.id}"
-  route_table_id = "${aws_route_table.private.id}"
+  vpc_id = "${aws_vpc.cloud.id}"
+  eip_id = "${aws_eip.c.id}"
+  gw_id  = "${aws_internet_gateway.gw.id}"
+
+  public_cidr_block  = "10.0.4.0/24"
+  private_cidr_block = "10.0.5.0/24"
+  availability_zone  = "eu-west-2c"
+
+  private_tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = "1"
+  }
 }
 
 resource "aws_route53_zone" "external" {
@@ -110,10 +128,10 @@ resource "aws_route53_zone" "internal" {
 /* jumpbox */
 
 module "jumpbox" {
-  source = "./node_group"
+  source = "./node"
 
   name      = "jumpbox"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${module.subnet_a.public_id}"
   key_name  = "${aws_key_pair.provisioning.key_name}"
 
   security_group_ids = [
@@ -123,6 +141,8 @@ module "jumpbox" {
 
   route53_zone_name = "${aws_route53_zone.internal.name}"
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
+
+  instance_type = "${local.instance_type_jumpbox}"
 }
 
 resource "aws_route53_record" "jumpbox-ipv4" {
@@ -138,10 +158,10 @@ resource "aws_route53_record" "jumpbox-ipv4" {
 /* web */
 
 module "web" {
-  source = "./node_group"
+  source = "./node"
 
   name      = "web"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${module.subnet_a.public_id}"
   key_name  = "${aws_key_pair.provisioning.key_name}"
 
   security_group_ids = [
@@ -151,26 +171,8 @@ module "web" {
 
   route53_zone_name = "${aws_route53_zone.internal.name}"
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
-}
 
-resource "aws_route53_record" "web-ipv4" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "web.${aws_route53_zone.external.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${module.web.public_ip}"]
-}
-
-resource "aws_route53_record" "web-ipv4-star" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "*.web.${aws_route53_zone.external.name}"
-  type    = "A"
-
-  alias {
-    zone_id = "${aws_route53_record.web-ipv4.zone_id}"
-    name    = "${aws_route53_record.web-ipv4.name}"
-    evaluate_target_health = true
-  }
+  instance_type = "${local.instance_type_web}"
 }
 
 resource "aws_route53_record" "web-ipv4-subdomain-star" {
@@ -178,12 +180,8 @@ resource "aws_route53_record" "web-ipv4-subdomain-star" {
   zone_id = "${aws_route53_zone.external.zone_id}"
   name    = "*.${local.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
   type    = "A"
-
-  alias {
-    zone_id = "${aws_route53_record.web-ipv4.zone_id}"
-    name    = "${aws_route53_record.web-ipv4.name}"
-    evaluate_target_health = true
-  }
+  ttl     = 300
+  records = ["${module.web.public_ip}"]
 }
 
 
@@ -191,10 +189,10 @@ resource "aws_route53_record" "web-ipv4-subdomain-star" {
 /* ci */
 
 module "ci" {
-  source = "./node_group"
+  source = "./node"
 
   name      = "ci"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${module.subnet_a.public_id}"
   key_name  = "${aws_key_pair.provisioning.key_name}"
 
   security_group_ids = [
@@ -206,7 +204,7 @@ module "ci" {
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
   instance_root_size = 100
-  instance_type      = "m5.xlarge"
+  instance_type      = "${local.instance_type_ci}"
 }
 
 resource "aws_route53_record" "ci-ipv4" {
@@ -222,10 +220,10 @@ resource "aws_route53_record" "ci-ipv4" {
 /* registry */
 
 module "registry" {
-  source = "./node_group"
+  source = "./node"
 
   name      = "registry"
-  subnet_id = "${aws_subnet.private.id}"
+  subnet_id = "${module.subnet_a.private_id}"
   key_name  = "${aws_key_pair.provisioning.key_name}"
 
   security_group_ids = [
@@ -236,107 +234,28 @@ module "registry" {
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
   instance_root_size = 25
+  instance_type      = "${local.instance_type_registry}"
 }
 
 
 /* ************************************************************************* */
-/* k8s-master */
+/* kubernetes */
 
-module "k8s-master" {
-  source = "./node_group"
+module "kubernetes" {
+  source = "./kubernetes"
 
-  name      = "k8s-master"
-  subnet_id = "${aws_subnet.private.id}"
-  key_name  = "${aws_key_pair.provisioning.key_name}"
-
-  security_group_ids = [
-    "${aws_security_group.standard.id}"
+  cluster_name = "${local.cluster_name}"
+  vpc_id       = "${aws_vpc.cloud.id}"
+  vpc_cidr     = "${aws_vpc.cloud.cidr_block}"
+  route53_id   = "${aws_route53_zone.internal.id}"
+  subnet_ids   = [
+    "${module.subnet_a.private_id}",
+    "${module.subnet_b.private_id}",
+    "${module.subnet_c.private_id}",
   ]
 
-  role_policy_arns = [
-    "${aws_iam_policy.k8s-master-ebs-policy.arn}"
-  ]
-
-  route53_zone_name = "${aws_route53_zone.internal.name}"
-  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
-
-  extra_tags = {
-    KubernetesCluster = "govuk-k8s"
-  }
-}
-
-resource "aws_iam_policy" "k8s-master-ebs-policy" {
-  name   = "k8s-master-ebs-policy"
-  path   = "/"
-  policy = "${data.aws_iam_policy_document.k8s-master-ebs-policy.json}"
-}
-
-data "aws_iam_policy_document" "k8s-master-ebs-policy" {
-  statement {
-    actions = [
-      "ec2:DescribeInstances",
-      "ec2:AttachVolume",
-      "ec2:DetachVolume",
-      "ec2:DescribeVolumes",
-      "ec2:CreateVolume",
-      "ec2:DeleteVolume",
-      "ec2:CreateTags",
-      "ec2:DescribeSecurityGroups",
-    ]
-
-    resources = ["*"]
-  }
-}
-
-
-/* ************************************************************************* */
-/* k8s-slave */
-
-module "k8s-slave" {
-  source = "./node_group"
-
-  name      = "k8s-slave"
-  instances = "${var.k8s_slaves}"
-  subnet_id = "${aws_subnet.private.id}"
-  key_name  = "${aws_key_pair.provisioning.key_name}"
-
-  security_group_ids = [
-    "${aws_security_group.standard.id}"
-  ]
-
-  role_policy_arns = [
-    "${aws_iam_policy.k8s-slave-ebs-policy.arn}"
-  ]
-
-  route53_zone_name = "${aws_route53_zone.internal.name}"
-  route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
-
-  instance_root_size = 50
-  instance_type      = "m5.xlarge"
-
-  extra_tags = {
-    KubernetesCluster = "govuk-k8s"
-  }
-}
-
-resource "aws_iam_policy" "k8s-slave-ebs-policy" {
-  name   = "k8s-slave-ebs-policy"
-  path   = "/"
-  policy = "${data.aws_iam_policy_document.k8s-slave-ebs-policy.json}"
-}
-
-data "aws_iam_policy_document" "k8s-slave-ebs-policy" {
-  statement {
-    actions = [
-      "ec2:DescribeInstances",
-      "ec2:AttachVolume",
-      "ec2:DetachVolume",
-      "ec2:DescribeVolumes",
-      "ec2:DescribeSecurityGroups",
-    ]
-
-    resources = ["*"]
-  }
+  worker_instance_count = "${var.worker_count}"
+  worker_instance_type  = "${local.instance_type_worker}"
 }
 
 
@@ -421,22 +340,6 @@ output "vpc-id" {
   value = "${aws_vpc.cloud.id}"
 }
 
-output "vpc-public-cidr" {
-  value = "${aws_subnet.public.cidr_block}"
-}
-
-output "vpc-public-id" {
-  value = "${aws_subnet.public.id}"
-}
-
-output "vpc-private-cidr" {
-  value = "${aws_subnet.private.cidr_block}"
-}
-
-output "vpc-private-id" {
-  value = "${aws_subnet.private.id}"
-}
-
 output "public-ssh-ip" {
   value = "${module.jumpbox.public_ip}"
 }
@@ -445,14 +348,18 @@ output "public-web-ip" {
   value = "${module.web.public_ip}"
 }
 
-output "k8s_slaves" {
-  value = "${var.k8s_slaves}"
-}
-
 output "external-domain" {
   value = "${aws_route53_zone.external.name}"
 }
 
 output "name-servers" {
   value = "${aws_route53_zone.external.name_servers}"
+}
+
+output "kubeconfig" {
+  value = "${module.kubernetes.kubeconfig}"
+}
+
+output "config_map_aws_auth" {
+  value = "${module.kubernetes.config_map_aws_auth}"
 }

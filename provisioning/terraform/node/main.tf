@@ -2,11 +2,6 @@ variable "name" {
   type = string
 }
 
-variable "instances" {
-  type    = number
-  default = 1
-}
-
 variable "instance_ami" {
   type    = string
   default = "ami-02a2b5480a79084b7"
@@ -14,7 +9,7 @@ variable "instance_ami" {
 
 variable "instance_type" {
   type    = string
-  default = "t3.medium"
+  default = "t3.small"
 }
 
 variable "instance_root_size" {
@@ -57,8 +52,6 @@ variable "role_policy_arns" {
 /* ************************************************************************* */
 
 resource "aws_instance" "ec2" {
-  count = "${var.instances}"
-
   ami           = "${var.instance_ami}"
   instance_type = "${var.instance_type}"
   subnet_id     = "${var.subnet_id}"
@@ -66,7 +59,7 @@ resource "aws_instance" "ec2" {
 
   vpc_security_group_ids = "${var.security_group_ids}"
 
-  tags = "${merge(var.extra_tags, map("name", "${var.name}", "index", "${count.index}"))}"
+  tags = "${merge(var.extra_tags, map("name", "${var.name}"))}"
 
   iam_instance_profile = "${aws_iam_instance_profile.profile.name}"
 
@@ -75,26 +68,12 @@ resource "aws_instance" "ec2" {
   }
 }
 
-resource "aws_route53_record" "indexed" {
-  count = "${var.instances}"
-
-  zone_id = "${var.route53_zone_id}"
-  name    = "${var.name}-${count.index}.${var.route53_zone_name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${aws_instance.ec2[count.index].private_ip}"]
-}
-
-resource "aws_route53_record" "initial" {
+resource "aws_route53_record" "dns" {
   zone_id = "${var.route53_zone_id}"
   name    = "${var.name}.${var.route53_zone_name}"
   type    = "A"
-
-  alias {
-    zone_id = "${aws_route53_record.indexed[0].zone_id}"
-    name    = "${aws_route53_record.indexed[0].name}"
-    evaluate_target_health = true
-  }
+  ttl     = 300
+  records = ["${aws_instance.ec2.private_ip}"]
 }
 
 resource "aws_iam_instance_profile" "profile" {
@@ -133,19 +112,11 @@ resource "aws_iam_role_policy_attachment" "attachment" {
 /* ************************************************************************* */
 
 output "public_ip" {
-  value = "${aws_instance.ec2[0].public_ip}"
+  value = "${aws_instance.ec2.public_ip}"
 }
 
 output "private_ip" {
-  value = "${aws_instance.ec2[0].private_ip}"
-}
-
-output "all_public_ips" {
-  value = "${aws_instance.ec2.*.public_ip}"
-}
-
-output "all_private_ips" {
-  value = "${aws_instance.ec2.*.private_ip}"
+  value = "${aws_instance.ec2.private_ip}"
 }
 
 output "role_name" {

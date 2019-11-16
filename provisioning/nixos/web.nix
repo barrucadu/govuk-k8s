@@ -1,131 +1,77 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  govuk_virtualhost = port: {
-    enableACME = config.govuk-k8s.enableHTTPS;
-    forceSSL   = config.govuk-k8s.enableHTTPS && config.govuk-k8s.forceHTTPS;
-    # todo: put a load balancer in front of the slaves and use that
-    locations."/".proxyPass = "http://k8s-slave-0.govuk-k8s.test:${toString port}";
-  };
+  external_domain = "web.${config.govuk-k8s.externalDomainName}";
 
-  domain = "web.${config.govuk-k8s.externalDomainName}";
+  proxy_to = namespace: host: app:
+    let tls = if config.govuk-k8s.enableHTTPS then "" else "tls off";
+        # with `tls off` caddy doesn't change the default port
+        port = if config.govuk-k8s.enableHTTPS then "" else ":80";
+        proxy_cfg = scheme: ''
+          ${scheme}${host}.${namespace}.${external_domain}${port} {
+            gzip
+            ${tls}
+            proxy / ${app}.${namespace}.in-cluster.govuk-k8s.test:80
+          }
+    '';
+    in ''
+      ${proxy_cfg ""}
+      ${if config.govuk-k8s.forceHTTPS then "" else proxy_cfg "http://"}
+    '';
 
-  # todo: use host-based routing inside k8s, rather than exposing
-  # ports.
-  ports = {
-    # router
-    www-origin               = 30000;
-    # frontend apps
-    calculators              = 30001;
-    calendars                = 30002;
-    collections              = 30003;
-    email-alert-frontend     = 30004;
-    feedback                 = 30005;
-    finder-frontend          = 30006;
-    frontend                 = 30007;
-    government-frontend      = 30008;
-    info-frontend            = 30009;
-    licence-finder           = 30010;
-    manuals-frontend         = 30011;
-    smart-answers            = 30012;
-    service-manual-frontend  = 30013;
-    static                   = 30014;
-    # public APIs
-    hmrc-manuals-api         = 30100;
-    # publishing apps
-    collections-publisher    = 30200;
-    contacts-admin           = 30201;
-    content-tagger           = 30202;
-    content-publisher        = 30203;
-    local-links-manager      = 30204;
-    manuals-publisher        = 30205;
-    maslow                   = 30206;
-    publisher                = 30207;
-    service-manual-publisher = 30208;
-    short-url-manager        = 30209;
-    travel-advice-publisher  = 30210;
-    whitehall                = 30211;
-    # supporting apps
-    search-admin             = 30300;
-    signon                   = 30301;
-    support                  = 30302;
-    release                  = 30303;
-  };
-
-  live_offset = 1000;
-
+  proxy = namespace: app: proxy_to namespace app app;
 in
 {
   imports = [ ./common.nix ];
 
-  services.nginx = {
-    enable = true;
+  services.caddy.enable = true;
+  services.caddy.agree  = true; # letsencrypt licence
+  services.caddy.email  = config.govuk-k8s.httpsEmail;
+  services.caddy.config = ''
+    ${proxy_to "live"  "www-origin" "fake-router"}
+    ${proxy_to "govuk" "www-origin" "router"}
 
-    recommendedGzipSettings  = true;
-    recommendedOptimisation  = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings   = true;
+    ${proxy "live" "calculators"}
+    ${proxy "live" "calendars"}
+    ${proxy "live" "collections"}
+    ${proxy "live" "finder-frontend"}
+    ${proxy "live" "frontend"}
+    ${proxy "live" "government-frontend"}
+    ${proxy "live" "info-frontend"}
+    ${proxy "live" "manuals-frontend"}
+    ${proxy "live" "smart-answers"}
+    ${proxy "live" "service-manual-frontend"}
 
-    commonHttpConfig = ''
-      server_names_hash_bucket_size 128;
-    '';
-
-    virtualHosts = {
-      default = {
-        default = true;
-        locations."/".extraConfig = "return 421;";
-      };
-
-      # govuk apps
-      "www-origin.${domain}"                   = govuk_virtualhost ports.www-origin;
-
-      "calculators.${domain}"                  = govuk_virtualhost ports.calculators;
-      "calendars.${domain}"                    = govuk_virtualhost ports.calendars;
-      "collections.${domain}"                  = govuk_virtualhost ports.collections;
-      "email-alert-frontend.${domain}"         = govuk_virtualhost ports.email-alert-frontend;
-      "feedback.${domain}"                     = govuk_virtualhost ports.feedback;
-      "finder-frontend.${domain}"              = govuk_virtualhost ports.finder-frontend;
-      "frontend.${domain}"                     = govuk_virtualhost ports.frontend;
-      "government-frontend.${domain}"          = govuk_virtualhost ports.government-frontend;
-      "info-frontend.${domain}"                = govuk_virtualhost ports.info-frontend;
-      "licence-finder.${domain}"               = govuk_virtualhost ports.licence-finder;
-      "manuals-frontend.${domain}"             = govuk_virtualhost ports.manuals-frontend;
-      "smart-answers.${domain}"                = govuk_virtualhost ports.smart-answers;
-      "service-manual-frontend.${domain}"      = govuk_virtualhost ports.service-manual-frontend;
-      "static.${domain}"                       = govuk_virtualhost ports.static;
-
-      "hmrc-manuals-api.${domain}"             = govuk_virtualhost ports.hmrc-manuals-api;
-
-      "collections-publisher.${domain}"        = govuk_virtualhost ports.collections-publisher;
-      "contacts-admin.${domain}"               = govuk_virtualhost ports.contacts-admin;
-      "content-tagger.${domain}"               = govuk_virtualhost ports.content-tagger;
-      "content-publisher.${domain}"            = govuk_virtualhost ports.content-publisher;
-      "local-links-manager.${domain}"          = govuk_virtualhost ports.local-links-manager;
-      "manuals-publisher.${domain}"            = govuk_virtualhost ports.manuals-publisher;
-      "maslow.${domain}"                       = govuk_virtualhost ports.maslow;
-      "publisher.${domain}"                    = govuk_virtualhost ports.publisher;
-      "service-manual-publisher.${domain}"     = govuk_virtualhost ports.service-manual-publisher;
-      "short-url-manager.${domain}"            = govuk_virtualhost ports.short-url-manager;
-      "travel-advice-publisher.${domain}"      = govuk_virtualhost ports.travel-advice-publisher;
-      "whitehall.${domain}"                    = govuk_virtualhost ports.whitehall;
-
-      "search-admin.${domain}"                 = govuk_virtualhost ports.search-admin;
-      "signon.${domain}"                       = govuk_virtualhost ports.signon;
-      "support.${domain}"                      = govuk_virtualhost ports.support;
-      "release.${domain}"                      = govuk_virtualhost ports.release;
-
-      # live: only frontend apps which can be run against live APIs
-      "www-origin.live.${domain}"              = govuk_virtualhost (live_offset + ports.www-origin);
-      "calculators.live.${domain}"             = govuk_virtualhost (live_offset + ports.calculators);
-      "calendars.live.${domain}"               = govuk_virtualhost (live_offset + ports.calendars);
-      "collections.live.${domain}"             = govuk_virtualhost (live_offset + ports.collections);
-      "finder-frontend.live.${domain}"         = govuk_virtualhost (live_offset + ports.finder-frontend);
-      "frontend.live.${domain}"                = govuk_virtualhost (live_offset + ports.frontend);
-      "government-frontend.live.${domain}"     = govuk_virtualhost (live_offset + ports.government-frontend);
-      "info-frontend.live.${domain}"           = govuk_virtualhost (live_offset + ports.info-frontend);
-      "manuals-frontend.live.${domain}"        = govuk_virtualhost (live_offset + ports.manuals-frontend);
-      "smart-answers.live.${domain}"           = govuk_virtualhost (live_offset + ports.smart-answers);
-      "service-manual-frontend.live.${domain}" = govuk_virtualhost (live_offset + ports.service-manual-frontend);
-    };
-  };
+    ${proxy "govuk" "calculators"}
+    ${proxy "govuk" "calendars"}
+    ${proxy "govuk" "collections"}
+    ${proxy "govuk" "email-alert-frontend"}
+    ${proxy "govuk" "feedback"}
+    ${proxy "govuk" "finder-frontend"}
+    ${proxy "govuk" "frontend"}
+    ${proxy "govuk" "government-frontend"}
+    ${proxy "govuk" "info-frontend"}
+    ${proxy "govuk" "licence-finder"}
+    ${proxy "govuk" "manuals-frontend"}
+    ${proxy "govuk" "smart-answers"}
+    ${proxy "govuk" "service-manual-frontend"}
+    ${proxy "govuk" "static"}
+    ${proxy "govuk" "hmrc-manuals-api"}
+    ${proxy "govuk" "collections-publisher"}
+    ${proxy "govuk" "contacts-admin"}
+    ${proxy "govuk" "content-tagger"}
+    ${proxy "govuk" "content-publisher"}
+    ${proxy "govuk" "local-links-manager"}
+    ${proxy "govuk" "manuals-publisher"}
+    ${proxy "govuk" "maslow"}
+    ${proxy "govuk" "publisher"}
+    ${proxy "govuk" "service-manual-publisher"}
+    ${proxy "govuk" "short-url-manager"}
+    ${proxy "govuk" "travel-advice-publisher"}
+    ${proxy "govuk" "whitehall"}
+    ${proxy "govuk" "search-admin"}
+    ${proxy "govuk" "signon"}
+    ${proxy "govuk" "support"}
+    ${proxy "govuk" "release"}
+  '';
 }

@@ -80,5 +80,9 @@ in
     extraGroups = [ "docker" ];
   };
 
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    autoPrune.enable = true;
+    enable = true;
+    extraOptions = "--insecure-registry=registry.govuk-k8s.test:5000";
+  };
 }
