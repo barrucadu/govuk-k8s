@@ -12,6 +12,10 @@ variable "vpc_cidr" {
   type = string
 }
 
+variable "route53_id" {
+  type = string
+}
+
 variable "subnet_ids" {
   type = list
 }
@@ -97,7 +101,7 @@ resource "aws_security_group_rule" "master_egress" {
 }
 
 resource "aws_security_group_rule" "master_ingress" {
-  description = "Allow anything in VPC to communicate with the cluster API server"
+  description = "Allows anything in VPC to communicate with the cluster API server (via HTTPS)"
   type        = "ingress"
   from_port   = 443
   to_port     = 443
@@ -150,6 +154,16 @@ resource "aws_iam_role_policy_attachment" "worker-AmazonEBSCSIDriver" {
   role       = "${aws_iam_role.worker.name}"
 }
 
+resource "aws_iam_role_policy_attachment" "worker-AmazonALBController" {
+  policy_arn = "${aws_iam_policy.alb-controller.arn}"
+  role       = "${aws_iam_role.worker.name}"
+}
+
+resource "aws_iam_role_policy_attachment" "worker-AmazonRoute53Controller" {
+  policy_arn = "${aws_iam_policy.route53-controller.arn}"
+  role       = "${aws_iam_role.worker.name}"
+}
+
 resource "aws_iam_policy" "ebs-csi-driver" {
   name   = "Amazon_EBS_CSI_Driver"
   path   = "/"
@@ -171,6 +185,162 @@ data "aws_iam_policy_document" "ebs-csi-driver" {
       "ec2:DescribeTags",
       "ec2:DescribeVolumes",
       "ec2:DetachVolume",
+    ]
+
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "alb-controller" {
+  name   = "Amazon_ALB_Controller"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.alb-controller.json}"
+}
+
+data "aws_iam_policy_document" "alb-controller" {
+  statement {
+    actions = [
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
+      "acm:GetCertificate",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ec2:AuthorizeSecurityGroupIngress",
+      "ec2:CreateSecurityGroup",
+      "ec2:CreateTags",
+      "ec2:DeleteTags",
+      "ec2:DeleteSecurityGroup",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeAddresses",
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceStatus",
+      "ec2:DescribeInternetGateways",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeTags",
+      "ec2:DescribeVpcs",
+      "ec2:ModifyInstanceAttribute",
+      "ec2:ModifyNetworkInterfaceAttribute",
+      "ec2:RevokeSecurityGroupIngress",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "elasticloadbalancing:AddListenerCertificates",
+      "elasticloadbalancing:AddTags",
+      "elasticloadbalancing:CreateListener",
+      "elasticloadbalancing:CreateLoadBalancer",
+      "elasticloadbalancing:CreateRule",
+      "elasticloadbalancing:CreateTargetGroup",
+      "elasticloadbalancing:DeleteListener",
+      "elasticloadbalancing:DeleteLoadBalancer",
+      "elasticloadbalancing:DeleteRule",
+      "elasticloadbalancing:DeleteTargetGroup",
+      "elasticloadbalancing:DeregisterTargets",
+      "elasticloadbalancing:DescribeListenerCertificates",
+      "elasticloadbalancing:DescribeListeners",
+      "elasticloadbalancing:DescribeLoadBalancers",
+      "elasticloadbalancing:DescribeLoadBalancerAttributes",
+      "elasticloadbalancing:DescribeRules",
+      "elasticloadbalancing:DescribeSSLPolicies",
+      "elasticloadbalancing:DescribeTags",
+      "elasticloadbalancing:DescribeTargetGroups",
+      "elasticloadbalancing:DescribeTargetGroupAttributes",
+      "elasticloadbalancing:DescribeTargetHealth",
+      "elasticloadbalancing:ModifyListener",
+      "elasticloadbalancing:ModifyLoadBalancerAttributes",
+      "elasticloadbalancing:ModifyRule",
+      "elasticloadbalancing:ModifyTargetGroup",
+      "elasticloadbalancing:ModifyTargetGroupAttributes",
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:RemoveListenerCertificates",
+      "elasticloadbalancing:RemoveTags",
+      "elasticloadbalancing:SetIpAddressType",
+      "elasticloadbalancing:SetSecurityGroups",
+      "elasticloadbalancing:SetSubnets",
+      "elasticloadbalancing:SetWebACL",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "iam:CreateServiceLinkedRole",
+      "iam:GetServerCertificate",
+      "iam:ListServerCertificates",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:DescribeUserPoolClient",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "waf-regional:GetWebACLForResource",
+      "waf-regional:GetWebACL",
+      "waf-regional:AssociateWebACL",
+      "waf-regional:DisassociateWebACL",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "tag:GetResources",
+      "tag:TagResources",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "waf:GetWebACL",
+    ]
+
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "route53-controller" {
+  name   = "Amazon_Route53_Controller"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.route53-controller.json}"
+}
+
+data "aws_iam_policy_document" "route53-controller" {
+  statement {
+    actions = [
+      "route53:ChangeResourceRecordSets",
+    ]
+
+    resources = [
+      "arn:aws:route53:::hostedzone/${var.route53_id}"
+    ]
+  }
+
+  statement {
+    actions = [
+      "route53:ListHostedZones",
+      "route53:ListResourceRecordSets",
     ]
 
     resources = ["*"]
@@ -199,6 +369,17 @@ resource "aws_security_group_rule" "worker_egress" {
   to_port     = 0
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.worker.id}"
+}
+
+resource "aws_security_group_rule" "worker_ingress" {
+  description = "Allows anything in VPC to communicate with the workers (via HTTP)"
+  type        = "ingress"
+  from_port   = 80
+  to_port     = 80
+  protocol    = "tcp"
+  cidr_blocks = ["${var.vpc_cidr}"]
 
   security_group_id = "${aws_security_group.worker.id}"
 }

@@ -8,7 +8,7 @@ variable "worker_count"         { type = number }
 
 locals {
   cluster_name   = "govuk-k8s"
-  web_subdomains = ["live"]
+  web_subdomains = ["govuk", "live"]
 
   instance_type_jumpbox  = "t3.micro"
   instance_type_web      = "t3.small"
@@ -73,6 +73,7 @@ module "subnet_a" {
 
   private_tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
@@ -89,6 +90,7 @@ module "subnet_b" {
 
   private_tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
@@ -105,6 +107,7 @@ module "subnet_c" {
 
   private_tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
@@ -172,37 +175,13 @@ module "web" {
   instance_type = "${local.instance_type_web}"
 }
 
-resource "aws_route53_record" "web-ipv4" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "web.${aws_route53_zone.external.name}"
-  type    = "A"
-  ttl     = 300
-  records = ["${module.web.public_ip}"]
-}
-
-resource "aws_route53_record" "web-ipv4-star" {
-  zone_id = "${aws_route53_zone.external.zone_id}"
-  name    = "*.web.${aws_route53_zone.external.name}"
-  type    = "A"
-
-  alias {
-    zone_id = "${aws_route53_record.web-ipv4.zone_id}"
-    name    = "${aws_route53_record.web-ipv4.name}"
-    evaluate_target_health = true
-  }
-}
-
 resource "aws_route53_record" "web-ipv4-subdomain-star" {
   count   = length(local.web_subdomains)
   zone_id = "${aws_route53_zone.external.zone_id}"
   name    = "*.${local.web_subdomains[count.index]}.web.${aws_route53_zone.external.name}"
   type    = "A"
-
-  alias {
-    zone_id = "${aws_route53_record.web-ipv4.zone_id}"
-    name    = "${aws_route53_record.web-ipv4.name}"
-    evaluate_target_health = true
-  }
+  ttl     = 300
+  records = ["${module.web.public_ip}"]
 }
 
 
@@ -268,6 +247,7 @@ module "kubernetes" {
   cluster_name = "${local.cluster_name}"
   vpc_id       = "${aws_vpc.cloud.id}"
   vpc_cidr     = "${aws_vpc.cloud.cidr_block}"
+  route53_id   = "${aws_route53_zone.internal.id}"
   subnet_ids   = [
     "${module.subnet_a.private_id}",
     "${module.subnet_b.private_id}",

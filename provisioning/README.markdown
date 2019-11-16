@@ -53,13 +53,16 @@ With these DNS records:
 | ------------------ | ---- | -------- | -------------- |
 | `ci`               | A    | external | `ci`           |
 | `jumpbox`          | A    | external | `jumpbox`      |
-| `web`              | A    | external | `web`          |
-| `*.web`            | A    | external | `web`          |
+| `*.govuk.web`      | A    | external | `web`          |
 | `*.live.web`       | A    | external | `web`          |
 | `ci`               | A    | internal | `ci`           |
 | `jumpbox`          | A    | internal | `jumpbox`      |
 | `registry`         | A    | internal | `registry`     |
 | `web`              | A    | internal | `web`          |
+
+Internal domain names for services deployed to the cluster are created
+as needed.  These follow the pattern
+`$app.$namespace.in-cluster.govuk-k8s.test`.
 
 To make the external domains work across the wider internet, you need
 to configure NS records wherever you host the DNS for that domain.

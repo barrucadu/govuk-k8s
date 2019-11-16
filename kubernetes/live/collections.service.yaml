@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: collections
+  namespace: live
 spec:
   selector:
     run: collections
@@ -9,5 +10,24 @@ spec:
     - protocol: TCP
       port: 3000
       targetPort: 3000
-      nodePort: 31003
   type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: collections
+  namespace: live
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/tags: App=collections,Namespace=live
+    alb.ingress.kubernetes.io/healthcheck-path: /government/organisations
+spec:
+  rules:
+    - host: collections.live.in-cluster.govuk-k8s.test
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: collections
+              servicePort: 3000

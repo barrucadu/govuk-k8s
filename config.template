@@ -39,6 +39,9 @@ ENABLE_HTTPS="false"
 # Force HTTPS, if it's enabled
 FORCE_HTTPS="true"
 
+# Email address for LetsEncrypt HTTPS certs
+HTTPS_EMAIL=""
+
 ## CI
 
 # Github username
