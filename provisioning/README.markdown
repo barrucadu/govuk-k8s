@@ -30,16 +30,16 @@ some EC2 instances, domain names, and security rules.
 
 The default configuration is:
 
-| Name          | Type        | Visibility         | Purpose                    |
-| ------------- | ----------- | ------------------ | -------------------------- |
-| `ci`          | `m5.xlarge` | internal, external | concourse worker node      |
-| `jumpbox`     | `t3.medium` | internal, external | SSH entry point to VPC     |
-| `web`         | `t3.medium` | internal, external | HTTP(S) entry point to VPC |
-| `registry`    | `t3.medium` | internal           | private docker registry    |
+| Name          | Type       | Visibility         | Purpose                    |
+| ------------- | ---------- | ------------------ | -------------------------- |
+| `ci`          | `m5.large` | internal, external | concourse worker node      |
+| `jumpbox`     | `t3.micro` | internal, external | SSH entry point to VPC     |
+| `web`         | `t3.small` | internal, external | HTTP(S) entry point to VPC |
+| `registry`    | `t3.small` | internal           | private docker registry    |
 
 There are also some EC2 instances for EKS to use as worker nodes,
 hidden behind an auto-scaling group.  These don't have names.  The
-default configuration is to have 2 `m5.xlarge` instances for this.
+default configuration is to have 2 `m5.large` instances for this.
 
 Each machine, other than the EKS workers, has an internal DNS record
 of `${name}.govuk-k8s.test`.  [`.test` is a reserved TLD][] so this

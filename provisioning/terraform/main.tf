@@ -9,6 +9,12 @@ variable "worker_count"         { type = number }
 locals {
   cluster_name   = "govuk-k8s"
   web_subdomains = ["live"]
+
+  instance_type_jumpbox  = "t3.micro"
+  instance_type_web      = "t3.small"
+  instance_type_registry = "t3.small"
+  instance_type_ci       = "m5.large"
+  instance_type_worker   = "m5.large"
 }
 
 
@@ -132,6 +138,8 @@ module "jumpbox" {
 
   route53_zone_name = "${aws_route53_zone.internal.name}"
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
+
+  instance_type = "${local.instance_type_jumpbox}"
 }
 
 resource "aws_route53_record" "jumpbox-ipv4" {
@@ -160,6 +168,8 @@ module "web" {
 
   route53_zone_name = "${aws_route53_zone.internal.name}"
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
+
+  instance_type = "${local.instance_type_web}"
 }
 
 resource "aws_route53_record" "web-ipv4" {
@@ -215,7 +225,7 @@ module "ci" {
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
   instance_root_size = 100
-  instance_type      = "m5.xlarge"
+  instance_type      = "${local.instance_type_ci}"
 }
 
 resource "aws_route53_record" "ci-ipv4" {
@@ -245,6 +255,7 @@ module "registry" {
   route53_zone_id   = "${aws_route53_zone.internal.zone_id}"
 
   instance_root_size = 25
+  instance_type      = "${local.instance_type_registry}"
 }
 
 
@@ -264,6 +275,7 @@ module "kubernetes" {
   ]
 
   worker_instance_count = "${var.worker_count}"
+  worker_instance_type  = "${local.instance_type_worker}"
 }
 
 

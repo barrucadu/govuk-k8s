@@ -23,7 +23,7 @@ variable "worker_ami" {
 
 variable "worker_instance_type" {
   type    = string
-  default = "m5.xlarge"
+  default = "m5.large"
 }
 
 variable "worker_instance_count" {
