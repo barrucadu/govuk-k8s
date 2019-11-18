@@ -28,12 +28,13 @@ while grep -q TPL_UUID secrets.yaml; do
   sed -i -e "/TPL_UUID/{s//$(uuidgen)/;:a" -e '$!N;$!ba' -e '}' secrets.yaml
 done
 
+kubectl="$(git rev-parse --show-toplevel)/util/kubectl.sh"
+
 for service in *.service.yaml; do
   app="${service//.service.yaml/}"
-  cp "../apps/${app}.deployment.yaml" .
+  "$kubectl" --namespace "$NAMESPACE" apply -f "../apps/${app}.deployment.yaml"
 done
 
-kubectl="$(git rev-parse --show-toplevel)/util/kubectl.sh"
 for file in *.yaml; do
   "$kubectl" --namespace "$NAMESPACE" apply -f "$file"
 done
