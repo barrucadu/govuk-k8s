@@ -11,7 +11,6 @@
     govuk-k8s = {
       externalDomainName          = lib.mkOption {};
       enableHTTPS                 = lib.mkOption {};
-      forceHTTPS                  = lib.mkOption {};
       httpsEmail                  = lib.mkOption {};
       concourseGithubUser         = lib.mkOption {};
       concourseGithubClientId     = lib.mkOption {};

@@ -36,9 +36,6 @@ WORKER_COUNT="2"
 # file, and run provisioning/deploy-nixos.sh.
 ENABLE_HTTPS="false"
 
-# Force HTTPS, if it's enabled
-FORCE_HTTPS="true"
-
 # Email address for LetsEncrypt HTTPS certs
 HTTPS_EMAIL=""
 

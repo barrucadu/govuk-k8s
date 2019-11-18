@@ -3,9 +3,7 @@
 let
   cfg = config.govuk-k8s;
 
-  domain = "ci.${cfg.externalDomainName}";
-
-  externalURL = "${if cfg.enableHTTPS then "https" else "http"}://${domain}";
+  external_domain = "ci.${cfg.externalDomainName}";
 
   dockerComposeFile = pkgs.writeText "docker-compose.yml" ''
     version: '3'
@@ -21,7 +19,7 @@ let
           CONCOURSE_POSTGRES_USER: concourse
           CONCOURSE_POSTGRES_PASSWORD: concourse
           CONCOURSE_POSTGRES_DATABASE: concourse
-          CONCOURSE_EXTERNAL_URL: "${externalURL}"
+          CONCOURSE_EXTERNAL_URL: "${if cfg.enableHTTPS then "https" else "http"}://${external_domain}"
           CONCOURSE_MAIN_TEAM_GITHUB_USER: "${cfg.concourseGithubUser}"
           CONCOURSE_GITHUB_CLIENT_ID: "${cfg.concourseGithubClientId}"
           CONCOURSE_GITHUB_CLIENT_SECRET: "${cfg.concourseGithubClientSecret}"
@@ -56,23 +54,22 @@ in
     };
   };
 
-  services.nginx = {
-    enable = true;
-
-    recommendedGzipSettings  = true;
-    recommendedOptimisation  = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings   = true;
-
-    virtualHosts."${domain}" = {
-      enableACME = cfg.enableHTTPS;
-      forceSSL   = cfg.enableHTTPS && cfg.forceHTTPS;
-      locations."/" = {
-        proxyPass = "http://localhost:8080/";
-        proxyWebsockets = true;
-      };
-    };
-  };
+  services.caddy.enable = true;
+  services.caddy.agree  = true; # letsencrypt licence
+  services.caddy.email  = config.govuk-k8s.httpsEmail;
+  services.caddy.config =
+    let
+      tls    = if config.govuk-k8s.enableHTTPS then "" else "tls off";
+      port   = if config.govuk-k8s.enableHTTPS then "" else ":80";
+      scheme = if config.govuk-k8s.enableHTTPS then "" else "http://";
+    in
+      ''
+        ${scheme}${external_domain}${port} {
+          gzip
+          ${tls}
+          proxy / localhost:8080
+        }
+      '';
 
   users.extraUsers.concourseci = {
     home = "/srv/concourseci";

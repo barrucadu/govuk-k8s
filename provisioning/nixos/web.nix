@@ -4,20 +4,18 @@ let
   external_domain = "web.${config.govuk-k8s.externalDomainName}";
 
   proxy_to = namespace: host: app:
-    let tls = if config.govuk-k8s.enableHTTPS then "" else "tls off";
-        # with `tls off` caddy doesn't change the default port
-        port = if config.govuk-k8s.enableHTTPS then "" else ":80";
-        proxy_cfg = scheme: ''
-          ${scheme}${host}.${namespace}.${external_domain}${port} {
-            gzip
-            ${tls}
-            proxy / ${app}.${namespace}.in-cluster.govuk-k8s.test:80
-          }
-    '';
-    in ''
-      ${proxy_cfg ""}
-      ${if config.govuk-k8s.forceHTTPS then "" else proxy_cfg "http://"}
-    '';
+    let
+      tls    = if config.govuk-k8s.enableHTTPS then "" else "tls off";
+      port   = if config.govuk-k8s.enableHTTPS then "" else ":80";
+      scheme = if config.govuk-k8s.enableHTTPS then "" else "http://";
+    in
+      ''
+        ${scheme}${host}.${namespace}.${external_domain}${port} {
+          gzip
+          ${tls}
+          proxy / ${app}.${namespace}.in-cluster.govuk-k8s.test:80
+        }
+      '';
 
   proxy = namespace: app: proxy_to namespace app app;
 in

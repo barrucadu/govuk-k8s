@@ -45,10 +45,6 @@ if [[ -z "$ENABLE_HTTPS" ]]; then
     echo "ENABLE_HTTPS is not set"
     err=true
 fi
-if [[ -z "$FORCE_HTTPS" ]]; then
-    echo "FORCE_HTTPS is not set"
-    err=true
-fi
 if [[ "$ENABLE_HTTPS" = "true" ]] && [[ -z "$HTTPS_EMAIL" ]]; then
     echo "HTTPS_EMAIL is not set"
     err=true
@@ -75,10 +71,6 @@ if [[ "$ENABLE_HTTPS" != "true" ]] && [[ "$ENABLE_HTTPS" != "false" ]]; then
     echo "ENABLE_HTTPS ($ENABLE_HTTPS) is neither 'true' nor 'false'"
     err=true
 fi
-if [[ "$FORCE_HTTPS" != "true" ]] && [[ "$FORCE_HTTPS" != "false" ]]; then
-    echo "FORCE_HTTPS ($FORCE_HTTPS) is neither 'true' nor 'false'"
-    err=true
-fi
 
 if $err; then
     exit 1
@@ -101,7 +93,6 @@ cat <<EOF > "$nixos_config_file"
 {
   govuk-k8s.externalDomainName          = "${EXTERNAL_DOMAIN_NAME}";
   govuk-k8s.enableHTTPS                 = ${ENABLE_HTTPS};
-  govuk-k8s.forceHTTPS                  = ${FORCE_HTTPS};
   govuk-k8s.httpsEmail                  = "${HTTPS_EMAIL}";
   govuk-k8s.concourseGithubUser         = "${GITHUB_USER}";
   govuk-k8s.concourseGithubClientId     = "${GITHUB_CLIENT_ID}";
