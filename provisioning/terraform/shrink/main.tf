@@ -11,18 +11,6 @@ locals {
 }
 
 
-/* ************************************************************************* */
-/* provider */
-
-provider "aws" {
-  region  = "${var.aws_region}"
-  profile = "${var.aws_profile}"
-}
-
-
-/* ************************************************************************* */
-/* networking */
-
 resource "aws_vpc" "cloud" {
   cidr_block = "10.0.0.0/16"
 
