@@ -13,7 +13,7 @@ locals {
   instance_type_jumpbox  = "t3.micro"
   instance_type_web      = "t3.small"
   instance_type_registry = "t3.small"
-  instance_type_ci       = "m5.large"
+  instance_type_ci       = "m5.xlarge"
   instance_type_worker   = "m5.large"
 }
 
