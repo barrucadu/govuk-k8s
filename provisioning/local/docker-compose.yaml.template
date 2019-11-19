@@ -1,0 +1,45 @@
+version: '3'
+services:
+  concourse:
+    container_name: govuk-k8s-ci
+    image: concourse/concourse
+    command: quickstart
+    privileged: true
+    depends_on: [postgres, registry]
+    environment:
+      CONCOURSE_POSTGRES_HOST: postgres
+      CONCOURSE_POSTGRES_USER: concourse
+      CONCOURSE_POSTGRES_PASSWORD: concourse
+      CONCOURSE_POSTGRES_DATABASE: concourse
+      CONCOURSE_EXTERNAL_URL: "http://ci.govuk-k8s.test:8080"
+      CONCOURSE_MAIN_TEAM_GITHUB_USER: "TPL_GITHUB_USER"
+      CONCOURSE_GITHUB_CLIENT_ID: "TPL_GITHUB_CLIENT_ID"
+      CONCOURSE_GITHUB_CLIENT_SECRET: "TPL_GITHUB_CLIENT_SECRET"
+      CONCOURSE_LOG_LEVEL: error
+      CONCOURSE_GARDEN_LOG_LEVEL: error
+    networks:
+      - network
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: concourse
+      POSTGRES_PASSWORD: concourse
+      POSTGRES_USER: concourse
+      PGDATA: /database
+    volumes:
+      - govuk_k8s_local_pgdata:/database
+    networks:
+      - network
+  registry:
+    container_name: govuk-k8s-registry
+    image: registry
+    volumes:
+      - govuk_k8s_local_regdata:/var/lib/registry
+    networks:
+      network:
+        aliases: ["registry.govuk-k8s.test"]
+networks:
+  network:
+volumes:
+  govuk_k8s_local_pgdata:
+  govuk_k8s_local_regdata:

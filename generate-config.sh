@@ -12,8 +12,8 @@ set -e
 source ./config
 
 err=false
-if [[ "$MODE" != "aws" ]]; then
-    echo "MODE must be 'aws'"
+if [[ "$MODE" != "aws" ]] && [[ "$MODE" != "local" ]]; then
+    echo "MODE must be 'aws' or 'local'"
     err=true
 fi
 if [[ -z "$KUBECONFIG" ]]; then

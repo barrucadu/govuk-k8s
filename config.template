@@ -9,6 +9,7 @@
 #
 # Valid options:
 # - aws
+# - local
 MODE="aws"
 
 # Place where kubectl config file will be stored
