@@ -29,6 +29,8 @@ Tools used:
 Set-up
 ------
 
+### 1. Deploy infrastructure
+
 ```bash
 # Generate config file based on the comments
 cp config.template config
@@ -41,10 +43,67 @@ nano config
 ./provisioning/create.sh
 ```
 
+### 2. Add DNS records
+
+The `./provisioning/create.sh` script gives you a list of nameservers
+to point your external domain name to.  Add the NS records wherever
+you manage your DNS.
+
+If you missed the nameserver output, you can get them with
+`./util/infra-info.sh`.
+
+### 3. Deploy CI and build apps
+
 After DNS has resolved and `ci.<external domain>` works you can deploy
 the Concourse configuration and trigger a build of all the apps:
 
 ```bash
-# Configure Concourse and trigger a build of all apps
 ./ci/create.sh
 ```
+
+### 4. Deploy live environment
+
+Now deploy the "live" environment configuration:
+
+```bash
+./kubernetes/deploy.sh live
+```
+
+You don't need to wait for Concourse to finish building the apps to do
+this, Kubernetes will retry downloading any images which aren't yet
+ready.
+
+When everything is up and running, you will be able to access the
+cluster at `www-origin.live.web.<external domain>` and
+`<app>.live.web.<external domain>`.
+
+Troubleshooting
+---------------
+
+### An app isn't working
+
+Some useful commands to check the status of the apps are:
+
+```bash
+# List all pods
+./util/kubectl.sh --namespace=live get pods
+
+# Give detailed information about a pod
+./util/kubectl.sh --namespace=live describe pod <pod name>
+
+# Retrieve the logs of a pod and follow updates
+./util/kubectl.sh --namespace=live logs -f <pod name>
+```
+
+### I get 502 Bad Gateway errors
+
+Some things to check are:
+
+- Are the pods receiving the request but hitting an error?
+- Do the caddy logs on the `web` machine show any problems?
+- Can internal domain names, like `finder-frontend.live.in-cluster.govuk-k8s.test` be resolved from the `web` machine?
+- Do the ALBs exist in the AWS Console?  Do they have healthy instances?
+- Do the Route53 records exist in the AWS Console?  Do they point to the right ALBs?
+
+Note that it can take a few minutes for the web server to first
+resolve the new internal domains.
