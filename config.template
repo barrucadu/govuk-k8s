@@ -5,39 +5,47 @@
 # This configuration file is a shell script which is sourced and used
 # to generate terraform.tfvars and vars.nix.
 
+# How to deploy the cluster.
+#
+# Valid options:
+# - aws
+MODE="aws"
+
 # Place where kubectl config file will be stored
 KUBECONFIG="${HOME}/.kube/config-govuk-k8s"
 
-## Infrastructure
+if [[ "$MODE" == "aws" ]]; then
+    ## Infrastructure
 
-# AWS region
-AWS_REGION="eu-west-2"
+    # AWS region
+    AWS_REGION="eu-west-2"
 
-# AWS profile
-AWS_PROFILE="govuk-k8s"
+    # AWS profile
+    AWS_PROFILE="govuk-k8s"
 
-# EC2 AMI (this has to be a NixOS image)
-EC2_AMI="ami-02a2b5480a79084b7"
+    # EC2 AMI (this has to be a NixOS image)
+    EC2_AMI="ami-02a2b5480a79084b7"
 
-# External domain name
-EXTERNAL_DOMAIN_NAME=""
+    # External domain name
+    EXTERNAL_DOMAIN_NAME=""
 
-# Path to SSH public key file for root
-PUBLIC_KEY_FILE=""
+    # Path to SSH public key file for root
+    PUBLIC_KEY_FILE=""
 
-# Number of k8s worker nodes
-WORKER_COUNT="2"
+    # Number of k8s worker nodes
+    WORKER_COUNT="2"
 
-## Web
+    ## Web
 
-# Enable HTTPS
-#
-# Turn this on once DNS has propagated, regenerate the configuration
-# file, and run provisioning/deploy-nixos.sh.
-ENABLE_HTTPS="false"
+    # Enable HTTPS
+    #
+    # Turn this on once DNS has propagated, regenerate the
+    # configuration file, and run provisioning/deploy-nixos.sh.
+    ENABLE_HTTPS="false"
 
-# Email address for LetsEncrypt HTTPS certs
-HTTPS_EMAIL=""
+    # Email address for LetsEncrypt HTTPS certs
+    HTTPS_EMAIL=""
+fi
 
 ## CI
 

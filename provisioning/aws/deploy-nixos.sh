@@ -2,7 +2,15 @@
 
 set -e
 
-HERE="$(git rev-parse --show-toplevel)/provisioning"
+TOP="$(git rev-parse --show-toplevel)"
+source "${TOP}/config"
+
+if [[ "$MODE" != "aws" ]]; then
+    echo "MODE != aws"
+    exit 1
+fi
+
+HERE="${TOP}/provisioning/aws"
 cd "$HERE"
 
 pushd terraform

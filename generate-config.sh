@@ -12,42 +12,55 @@ set -e
 source ./config
 
 err=false
-# presence checking
+if [[ "$MODE" != "aws" ]]; then
+    echo "MODE must be 'aws'"
+    err=true
+fi
 if [[ -z "$KUBECONFIG" ]]; then
     echo "KUBECONFIG is not set"
     err=true
 fi
-if [[ -z "$AWS_REGION" ]]; then
-    echo "AWS_REGION is not set"
-    err=true
-fi
-if [[ -z "$AWS_PROFILE" ]]; then
-    echo "AWS_PROFILE is not set"
-    err=true
-fi
-if [[ -z "$EC2_AMI" ]]; then
-    echo "EC2_AMI is not set"
-    err=true
-fi
-if [[ -z "$EXTERNAL_DOMAIN_NAME" ]]; then
-    echo "EXTERNAL_DOMAIN_NAME is not set"
-    err=true
-fi
-if [[ -z "$PUBLIC_KEY_FILE" ]]; then
-    echo "PUBLIC_KEY_FILE is not set"
-    err=true
-fi
-if [[ -z "$WORKER_COUNT" ]]; then
-    echo "WORKER_COUNT is not set"
-    err=true
-fi
-if [[ -z "$ENABLE_HTTPS" ]]; then
-    echo "ENABLE_HTTPS is not set"
-    err=true
-fi
-if [[ "$ENABLE_HTTPS" = "true" ]] && [[ -z "$HTTPS_EMAIL" ]]; then
-    echo "HTTPS_EMAIL is not set"
-    err=true
+if [[ "$MODE" == "aws" ]]; then
+    if [[ -z "$AWS_REGION" ]]; then
+        echo "AWS_REGION is not set"
+        err=true
+    fi
+    if [[ -z "$AWS_PROFILE" ]]; then
+        echo "AWS_PROFILE is not set"
+        err=true
+    fi
+    if [[ -z "$EC2_AMI" ]]; then
+        echo "EC2_AMI is not set"
+        err=true
+    fi
+    if [[ -z "$EXTERNAL_DOMAIN_NAME" ]]; then
+        echo "EXTERNAL_DOMAIN_NAME is not set"
+        err=true
+    fi
+    if [[ -z "$PUBLIC_KEY_FILE" ]]; then
+        echo "PUBLIC_KEY_FILE is not set"
+        err=true
+    fi
+    if [[ -z "$WORKER_COUNT" ]]; then
+        echo "WORKER_COUNT is not set"
+        err=true
+    fi
+    if [[ -z "$ENABLE_HTTPS" ]]; then
+        echo "ENABLE_HTTPS is not set"
+        err=true
+    fi
+    if [[ "$ENABLE_HTTPS" = "true" ]] && [[ -z "$HTTPS_EMAIL" ]]; then
+        echo "HTTPS_EMAIL is not set"
+        err=true
+    fi
+    if [[ ! -f "$PUBLIC_KEY_FILE" ]]; then
+        echo "PUBLIC_KEY_FILE ($PUBLIC_KEY_FILE) does not exist"
+        err=true
+    fi
+    if [[ "$ENABLE_HTTPS" != "true" ]] && [[ "$ENABLE_HTTPS" != "false" ]]; then
+        echo "ENABLE_HTTPS ($ENABLE_HTTPS) is neither 'true' nor 'false'"
+        err=true
+    fi
 fi
 if [[ -z "$GITHUB_USER" ]]; then
     echo "GITHUB_USER is not set"
@@ -62,23 +75,14 @@ if [[ -z "$GITHUB_CLIENT_SECRET" ]]; then
     err=true
 fi
 
-# more validation
-if [[ ! -f "$PUBLIC_KEY_FILE" ]]; then
-    echo "PUBLIC_KEY_FILE ($PUBLIC_KEY_FILE) does not exist"
-    err=true
-fi
-if [[ "$ENABLE_HTTPS" != "true" ]] && [[ "$ENABLE_HTTPS" != "false" ]]; then
-    echo "ENABLE_HTTPS ($ENABLE_HTTPS) is neither 'true' nor 'false'"
-    err=true
-fi
-
 if $err; then
     exit 1
 fi
 
 # Generate config files
-terraform_config_file="provisioning/terraform/terraform.tfvars"
-cat <<EOF > "$terraform_config_file"
+if [[ "$MODE" == "aws" ]]; then
+    terraform_config_file="provisioning/terraform/terraform.tfvars"
+    cat <<EOF > "$terraform_config_file"
 aws_region           = "${AWS_REGION}"
 aws_profile          = "${AWS_PROFILE}"
 ec2_ami              = "${EC2_AMI}"
@@ -86,10 +90,10 @@ external_domain_name = "${EXTERNAL_DOMAIN_NAME}"
 public_key_file      = "${PUBLIC_KEY_FILE}"
 worker_count         = ${WORKER_COUNT}
 EOF
-echo "generated $terraform_config_file"
+    echo "generated $terraform_config_file"
 
-nixos_config_file="provisioning/nixos/vars.nix"
-cat <<EOF > "$nixos_config_file"
+    nixos_config_file="provisioning/nixos/vars.nix"
+    cat <<EOF > "$nixos_config_file"
 {
   govuk-k8s.externalDomainName          = "${EXTERNAL_DOMAIN_NAME}";
   govuk-k8s.enableHTTPS                 = ${ENABLE_HTTPS};
@@ -99,4 +103,5 @@ cat <<EOF > "$nixos_config_file"
   govuk-k8s.concourseGithubClientSecret = "${GITHUB_CLIENT_SECRET}";
 }
 EOF
-echo "generated $nixos_config_file"
+    echo "generated $nixos_config_file"
+fi

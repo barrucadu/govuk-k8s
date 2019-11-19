@@ -2,14 +2,17 @@
 
 set -e
 
-HERE="$(git rev-parse --show-toplevel)/ci/concourse"
+TOP="$(git rev-parse --show-toplevel)"
+source "${TOP}/config"
+
+HERE="${TOP}/ci/concourse"
 cd "$HERE"
 
-source "$(git rev-parse --show-toplevel)/config"
+external_domain_name="${EXTERNAL_DOMAIN_NAME:-govuk-k8s.test}"
 
-URL="http://ci.${EXTERNAL_DOMAIN_NAME}"
+URL="http://ci.${external_domain_name}"
 if $ENABLE_HTTPS; then
-    URL="https://ci.${EXTERNAL_DOMAIN_NAME}"
+    URL="https://ci.${external_domain_name}"
 fi
 
 fly login -t govuk-k8s -c "$URL"

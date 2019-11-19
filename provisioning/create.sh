@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
-set -e
+TOP="$(git rev-parse --show-toplevel)"
+SCRIPT="${TOP}/provisioning/${MODE}/create.sh"
 
-HERE="$(git rev-parse --show-toplevel)/provisioning"
-cd "$HERE"
+source "${TOP}/config"
 
-./deploy-terraform.sh
-./deploy-nixos.sh
-./deploy-k8s.sh
+if [[ ! -x "$SCRIPT" ]]; then
+    echo "bad mode"
+    exit 1
+fi
 
-../util/infra-info.sh
+"$SCRIPT"

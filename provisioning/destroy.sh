@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-set -e
+TOP="$(git rev-parse --show-toplevel)"
+SCRIPT="${TOP}/provisioning/${MODE}/destroy.sh"
 
-HERE="$(git rev-parse --show-toplevel)/provisioning"
-cd "$HERE/terraform"
+source "${TOP}/config"
 
-terraform destroy "$@"
+if [[ ! -x "$SCRIPT" ]]; then
+    echo "bad mode"
+    exit 1
+fi
+
+"$SCRIPT"
