@@ -19,22 +19,22 @@ source "$(git rev-parse --show-toplevel)/config"
 
 cd "$NAMESPACE"
 
-cp secrets.yaml.template secrets.yaml
-sed -i "s/TPL_ENABLE_HTTPS/${ENABLE_HTTPS}/" secrets.yaml
-sed -i "s/TPL_EXTERNAL_DOMAIN_NAME/${EXTERNAL_DOMAIN_NAME}/" secrets.yaml
+case "$ENABLE_HTTPS" in
+  "true")
+    echo "./apps.dhall True \"${EXTERNAL_DOMAIN_NAME}\"" | dhall-to-json > apps.yaml
+    ;;
+  *)
+    echo "./apps.dhall False \"${EXTERNAL_DOMAIN_NAME}\"" | dhall-to-json > apps.yaml
+    ;;
+esac
 
+cp secrets.yaml.template secrets.yaml
 # generate a fresh SECRET_KEY_BASE every time
 while grep -q TPL_UUID secrets.yaml; do
   sed -i -e "/TPL_UUID/{s//$(uuidgen)/;:a" -e '$!N;$!ba' -e '}' secrets.yaml
 done
 
 kubectl="$(git rev-parse --show-toplevel)/util/kubectl.sh"
-
-for service in *.service.yaml; do
-  app="${service//.service.yaml/}"
-  "$kubectl" --namespace "$NAMESPACE" apply -f "../apps/${app}.deployment.yaml"
-done
-
 for file in *.yaml; do
   "$kubectl" --namespace "$NAMESPACE" apply -f "$file"
 done
