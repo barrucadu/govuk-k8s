@@ -5,7 +5,7 @@ NAMESPACE="$1"
 HERE="$(git rev-parse --show-toplevel)/kubernetes"
 cd "$HERE"
 
-if [[ -z "$NAMESPACE" ]] || [[ ! -e "${NAMESPACE}/secrets.yaml.template" ]]; then
+if [[ -z "$NAMESPACE" ]] || [[ ! -e "${NAMESPACE}/apps.dhall" ]]; then
     echo "usage: $0 <namespace>"
     exit 1
 fi
@@ -28,11 +28,26 @@ case "$ENABLE_HTTPS" in
     ;;
 esac
 
-cp secrets.yaml.template secrets.yaml
-# generate a fresh SECRET_KEY_BASE every time
-while grep -q TPL_UUID secrets.yaml; do
-  sed -i -e "/TPL_UUID/{s//$(uuidgen)/;:a" -e '$!N;$!ba' -e '}' secrets.yaml
-done
+if [[ ! -e secrets.yaml ]]; then
+  cat <<EOF > secrets.yaml
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: govuk
+stringData:
+  SECRET_KEY_BASE-calculators: $(uuidgen)
+  SECRET_KEY_BASE-calendars: $(uuidgen)
+  SECRET_KEY_BASE-collections: $(uuidgen)
+  SECRET_KEY_BASE-finder-frontend: $(uuidgen)
+  SECRET_KEY_BASE-frontend: $(uuidgen)
+  SECRET_KEY_BASE-government-frontend: $(uuidgen)
+  SECRET_KEY_BASE-info-frontend: $(uuidgen)
+  SECRET_KEY_BASE-manuals-frontend: $(uuidgen)
+  SECRET_KEY_BASE-service-manual-frontend: $(uuidgen)
+  SECRET_KEY_BASE-smart-answers: $(uuidgen)
+EOF
+fi
 
 kubectl="$(git rev-parse --show-toplevel)/util/kubectl.sh"
 for file in *.yaml; do
