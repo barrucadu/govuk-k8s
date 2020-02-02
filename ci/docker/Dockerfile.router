@@ -1,0 +1,15 @@
+FROM golang:1.9.1
+
+RUN useradd -m govuk && \
+    mkdir -p /go/src/github.com/alphagov && \
+    chown -R govuk /go
+
+USER govuk
+
+COPY --chown=govuk . /go/src/github.com/alphagov/router
+
+WORKDIR /go/src/github.com/alphagov/router
+
+RUN go build -ldflags "-X main.version=govuk-k8s-build" -o router
+
+CMD "./router"

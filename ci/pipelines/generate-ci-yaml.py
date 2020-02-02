@@ -91,9 +91,11 @@ frontend_apps = [
     "service-manual-frontend",
 ]
 
-api_apps = ["content-store", "search-api"]
+api_apps = ["content-store", "publishing-api", "router-api", "search-api"]
 
-all_apps = frontend_apps + api_apps
+backend_apps = ["publisher", "signon"]
+
+all_apps = frontend_apps + api_apps + backend_apps
 
 extra_job_kwargs = {
     "content-store": {"rake_assets_precompile": False},
@@ -108,9 +110,11 @@ pipeline = {
             repo="https://github.com/barrucadu/govuk-k8s.git",
             branch="master",
         ),
+        git_resource("router"),
         image_resource("govuk-base"),
         image_resource("ruby-2-6-5"),
         image_resource("fake-router"),
+        image_resource("router"),
     ],
     "jobs": [
         build_base_image("govuk-base", base_image=None),
@@ -129,12 +133,29 @@ pipeline = {
                 },
             ],
         },
+        {
+            "name": "router",
+            "serial": True,
+            "plan": [
+                {"get": "govuk-base-git"},
+                {"get": "router-git", "trigger": True},
+                {
+                    "put": "router-image",
+                    "params": {
+                        "build": "router-git",
+                        "dockerfile": "govuk-base-git/ci/docker/Dockerfile.router",
+                        "tag_as_latest": True,
+                    },
+                },
+            ],
+        },
     ],
     "groups": [
         {"name": "CI", "jobs": ["govuk-base", "ruby-2-6-5"]},
         {"name": "Frontend", "jobs": frontend_apps},
         {"name": "API", "jobs": api_apps},
-        {"name": "Miscellaneous", "jobs": ["fake-router"]},
+        {"name": "Backend", "jobs": backend_apps},
+        {"name": "Miscellaneous", "jobs": ["fake-router", "router"]},
     ],
 }
 

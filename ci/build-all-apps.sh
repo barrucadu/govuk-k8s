@@ -11,3 +11,4 @@ fi
 
 fly trigger-job -t govuk-k8s -j ci/govuk-base
 fly trigger-job -t govuk-k8s -j ci/fake-router
+fly trigger-job -t govuk-k8s -j ci/router
